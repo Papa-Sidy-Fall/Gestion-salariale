@@ -4,9 +4,12 @@ exports.EmployeeController = void 0;
 const employeeService_1 = require("../service/employeeService");
 class EmployeeController {
     static async createEmployee(req, res) {
-        var _a;
+        var _a, _b;
         try {
-            const employeeData = Object.assign(Object.assign({}, req.body), { companyId: ((_a = req.user) === null || _a === void 0 ? void 0 : _a.companyId) || req.body.companyId });
+            console.log('Données reçues:', req.body);
+            console.log('Utilisateur:', req.user);
+            const employeeData = Object.assign(Object.assign({}, req.body), { companyId: ((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) === 'SUPER_ADMIN' ? req.body.companyId : (_b = req.user) === null || _b === void 0 ? void 0 : _b.companyId });
+            console.log('Données à créer:', employeeData);
             const employee = await employeeService_1.EmployeeService.createEmployee(employeeData);
             res.status(201).json({
                 message: 'Employé créé avec succès',

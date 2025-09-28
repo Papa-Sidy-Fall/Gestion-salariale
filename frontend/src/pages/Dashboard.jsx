@@ -23,16 +23,41 @@ const Dashboard = () => {
     { month: 'Décembre', amount: 1500000 }
   ]);
 
-  // Mock data - à remplacer par des appels API réels
+  // Charger les vraies données depuis l'API
   useEffect(() => {
-    // Simulation de données
-    setStats({
-      totalEmployees: 25,
-      totalSalary: 1500000,
-      paidAmount: 1200000,
-      pendingAmount: 300000
-    });
+    fetchDashboardStats();
   }, []);
+
+  const fetchDashboardStats = async () => {
+    try {
+      // Récupérer les statistiques des employés
+      const employeesResponse = await axios.get('http://localhost:3000/api/employees');
+      const employees = employeesResponse.data.employees || [];
+
+      // Récupérer les statistiques des paiements
+      const paymentsResponse = await axios.get('http://localhost:3000/api/payments/stats');
+      const paymentStats = paymentsResponse.data.stats;
+
+      // Calculer les statistiques
+      const totalEmployees = employees.length;
+      const activeEmployees = employees.filter(emp => emp.isActive).length;
+
+      // Calculer la masse salariale (somme des taux des employés actifs)
+      const totalSalary = employees
+        .filter(emp => emp.isActive)
+        .reduce((sum, emp) => sum + emp.rate, 0);
+
+      setStats({
+        totalEmployees: activeEmployees,
+        totalSalary: totalSalary,
+        paidAmount: paymentStats.totalAmount || 0,
+        pendingAmount: totalSalary - (paymentStats.totalAmount || 0)
+      });
+    } catch (error) {
+      console.error('Erreur lors du chargement des statistiques:', error);
+      // En cas d'erreur, garder les données par défaut
+    }
+  };
 
   const StatCard = ({ title, value, icon, color }) => (
     <div className={`bg-white overflow-hidden shadow rounded-lg ${color}`}>
@@ -184,8 +209,11 @@ const Dashboard = () => {
               Actions rapides
             </h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">
-                Nouveau cycle de paie
+              <button
+                onClick={() => navigate('/payruns')}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+              >
+                Gérer cycles de paie
               </button>
               <button
                 onClick={() => navigate('/employees')}
@@ -196,7 +224,10 @@ const Dashboard = () => {
               <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium">
                 Générer bulletins
               </button>
-              <button className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+              <button
+                onClick={() => navigate('/payments')}
+                className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+              >
                 Voir paiements
               </button>
             </div>

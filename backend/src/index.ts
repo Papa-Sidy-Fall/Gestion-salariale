@@ -3,6 +3,8 @@ import cors from "cors";
 import authRoutes from "./routes/auth";
 import companyRoutes from "./routes/company";
 import employeeRoutes from "./routes/employee";
+import payRunRoutes from "./routes/payRun";
+import paymentRoutes from "./routes/payment";
 
 const app = express();
 
@@ -14,6 +16,8 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/companies", companyRoutes);
 app.use("/api/employees", employeeRoutes);
+app.use("/api/payruns", payRunRoutes);
+app.use("/api/payments", paymentRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("🚀 Serveur Express + TypeScript prêt !");
