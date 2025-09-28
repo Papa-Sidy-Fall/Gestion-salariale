@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Employees from './pages/Employees';
 import PayRuns from './pages/PayRuns';
 import Payments from './pages/Payments';
+import Companies from './pages/Companies';
 import './App.css';
 
 function App() {
@@ -43,6 +44,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Payments />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/companies"
+              element={
+                <ProtectedRoute>
+                  <Companies />
                 </ProtectedRoute>
               }
             />

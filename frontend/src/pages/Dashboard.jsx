@@ -10,7 +10,8 @@ const Dashboard = () => {
     totalEmployees: 0,
     totalSalary: 0,
     paidAmount: 0,
-    pendingAmount: 0
+    pendingAmount: 0,
+    upcomingPayments: []
   });
 
   // Données du graphique - évolution de la masse salariale sur 6 mois
@@ -31,12 +32,36 @@ const Dashboard = () => {
   const fetchDashboardStats = async () => {
     try {
       // Récupérer les statistiques des employés
-      const employeesResponse = await axios.get('http://localhost:3000/api/employees');
+      const employeesResponse = await axios.get(`http://localhost:3000/api/employees?companyId=${user?.companyId || ''}`);
       const employees = employeesResponse.data.employees || [];
 
       // Récupérer les statistiques des paiements
-      const paymentsResponse = await axios.get('http://localhost:3000/api/payments/stats');
+      const paymentsResponse = await axios.get(`http://localhost:3000/api/payments/stats?companyId=${user?.companyId || ''}`);
       const paymentStats = paymentsResponse.data.stats;
+
+      // Récupérer les prochains paiements (bulletins non payés)
+      const payRunsResponse = await axios.get(`http://localhost:3000/api/payruns?companyId=${user?.companyId || ''}`);
+      const payRuns = payRunsResponse.data.payRuns || [];
+
+      const upcomingPayments = [];
+      payRuns.forEach(payRun => {
+        if (payRun.payslips) {
+          payRun.payslips.forEach(payslip => {
+            if (payslip.status !== 'PAYE') {
+              const totalPaid = payslip.payments?.reduce((sum, payment) => sum + payment.amount, 0) || 0;
+              const remainingAmount = payslip.net - totalPaid;
+
+              if (remainingAmount > 0) {
+                upcomingPayments.push({
+                  ...payslip,
+                  payRun: { period: payRun.period },
+                  amount: remainingAmount
+                });
+              }
+            }
+          });
+        }
+      });
 
       // Calculer les statistiques
       const totalEmployees = employees.length;
@@ -47,12 +72,15 @@ const Dashboard = () => {
         .filter(emp => emp.isActive)
         .reduce((sum, emp) => sum + emp.rate, 0);
 
-      setStats({
+      const newStats = {
         totalEmployees: activeEmployees,
         totalSalary: totalSalary,
         paidAmount: paymentStats.totalAmount || 0,
-        pendingAmount: totalSalary - (paymentStats.totalAmount || 0)
-      });
+        pendingAmount: totalSalary - (paymentStats.totalAmount || 0),
+        upcomingPayments: upcomingPayments.slice(0, 5) // Limiter à 5 paiements
+      };
+
+      setStats(newStats);
     } catch (error) {
       console.error('Erreur lors du chargement des statistiques:', error);
       // En cas d'erreur, garder les données par défaut
@@ -93,6 +121,16 @@ const Dashboard = () => {
               </h1>
             </div>
             <div className="flex items-center space-x-4">
+              {/* Navigation pour Super Admin */}
+              {user?.role === 'SUPER_ADMIN' && (
+                <button
+                  onClick={() => navigate('/companies')}
+                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Entreprises
+                </button>
+              )}
+
               <span className="text-sm text-gray-700">
                 Bienvenue, {user?.email}
               </span>
@@ -177,27 +215,27 @@ const Dashboard = () => {
                   Prochains paiements à effectuer
                 </h3>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Jean Dupont</p>
-                      <p className="text-sm text-gray-500">Salaire Octobre</p>
-                    </div>
-                    <span className="text-sm font-medium text-gray-900">150,000 FCFA</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Marie Martin</p>
-                      <p className="text-sm text-gray-500">Salaire Octobre</p>
-                    </div>
-                    <span className="text-sm font-medium text-gray-900">200,000 FCFA</span>
-                  </div>
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded">
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">Pierre Durand</p>
-                      <p className="text-sm text-gray-500">Salaire Octobre</p>
-                    </div>
-                    <span className="text-sm font-medium text-gray-900">180,000 FCFA</span>
-                  </div>
+                  {stats.upcomingPayments && stats.upcomingPayments.length > 0 ? (
+                    stats.upcomingPayments.slice(0, 3).map((payment, index) => (
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            {payment.employee?.firstName} {payment.employee?.lastName}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {payment.payRun?.period || 'Salaire du mois'}
+                          </p>
+                        </div>
+                        <span className="text-sm font-medium text-gray-900">
+                          {payment.amount?.toLocaleString() || '0'} FCFA
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500 text-center py-4">
+                      Aucun paiement en attente
+                    </p>
+                  )}
                 </div>
               </div>
             </div>
