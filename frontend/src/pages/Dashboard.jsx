@@ -31,17 +31,30 @@ const Dashboard = () => {
 
   const fetchDashboardStats = async () => {
     try {
+      console.log('Utilisateur connecté:', user);
+      console.log('Rôle:', user?.role);
+      console.log('CompanyId:', user?.companyId);
+
+      // Pour Super Admin, récupérer toutes les données
+      // Pour Admin/Caissier, filtrer par entreprise
+      const companyIdParam = user?.role === 'SUPER_ADMIN' ? '' : (user?.companyId || '');
+
+      console.log('Paramètre companyId utilisé:', companyIdParam);
+
       // Récupérer les statistiques des employés
-      const employeesResponse = await axios.get(`http://localhost:3000/api/employees?companyId=${user?.companyId || ''}`);
+      const employeesResponse = await axios.get(`http://localhost:3000/api/employees?companyId=${companyIdParam}`);
       const employees = employeesResponse.data.employees || [];
+      console.log('Employés récupérés:', employees.length, employees);
 
       // Récupérer les statistiques des paiements
-      const paymentsResponse = await axios.get(`http://localhost:3000/api/payments/stats?companyId=${user?.companyId || ''}`);
+      const paymentsResponse = await axios.get(`http://localhost:3000/api/payments/stats?companyId=${companyIdParam}`);
       const paymentStats = paymentsResponse.data.stats;
+      console.log('Statistiques paiements:', paymentStats);
 
       // Récupérer les prochains paiements (bulletins non payés)
-      const payRunsResponse = await axios.get(`http://localhost:3000/api/payruns?companyId=${user?.companyId || ''}`);
+      const payRunsResponse = await axios.get(`http://localhost:3000/api/payruns?companyId=${companyIdParam}`);
       const payRuns = payRunsResponse.data.payRuns || [];
+      console.log('Cycles de paie récupérés:', payRuns.length);
 
       const upcomingPayments = [];
       payRuns.forEach(payRun => {
