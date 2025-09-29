@@ -26,7 +26,7 @@ export class EmployeeService {
   }
 
   static async getAllEmployees(companyId?: string) {
-    const where = companyId ? { companyId, isActive: true } : { isActive: true };
+    const where = companyId ? { companyId } : {};
 
     const employees = await prisma.employee.findMany({
       where,
@@ -130,8 +130,7 @@ export class EmployeeService {
   static async getEmployeesByCompany(companyId: string) {
     const employees = await prisma.employee.findMany({
       where: {
-        companyId,
-        isActive: true
+        companyId
       },
       include: {
         payslips: {

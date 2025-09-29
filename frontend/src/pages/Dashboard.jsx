@@ -92,7 +92,7 @@ const Dashboard = () => {
       // Calculer les statistiques
       const activeEmployees = employees.filter(emp => emp.isActive).length;
 
-      // Calculer la masse salariale (somme des taux des employés actifs)
+      // Calculer la masse salariale (somme des taux des employés actifs seulement)
       const totalSalary = employees
         .filter(emp => emp.isActive)
         .reduce((sum, emp) => sum + emp.rate, 0);
