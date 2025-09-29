@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import { Building2 } from 'lucide-react';
 
 const Companies = () => {
   const { user } = useAuth();
@@ -203,9 +204,7 @@ const Companies = () => {
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-12 w-12">
                         <div className="h-12 w-12 rounded-full bg-blue-300 flex items-center justify-center">
-                          <span className="text-lg font-medium text-blue-700">
-                            🏢
-                          </span>
+                          <Building2 className="h-6 w-6 text-blue-700" />
                         </div>
                       </div>
                       <div className="ml-4">

@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { Users, DollarSign, Clock, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
+
+
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -103,12 +107,16 @@ const Dashboard = () => {
     }
   };
 
-  const StatCard = ({ title, value, icon, color }) => (
+  const StatCard = ({ title, value, icon: Icon,icon2: Icon2, color }) => (
     <div className={`bg-white overflow-hidden shadow rounded-lg ${color}`}>
       <div className="p-5">
         <div className="flex items-center">
           <div className="flex-shrink-0">
-            <div className="text-2xl">{icon}</div>
+            <Icon className="h-8 w-8 text-blue-400" />
+            
+        
+
+
           </div>
           <div className="ml-5 w-0 flex-1">
             <dl>
@@ -249,25 +257,25 @@ const Dashboard = () => {
                 <StatCard
                   title="Employés actifs"
                   value={stats.totalEmployees}
-                  icon="👥"
+                  icon={Users}
                   color="border-l-4 border-blue-500"
                 />
                 <StatCard
                   title="Masse salariale"
                   value={`${stats.totalSalary.toLocaleString()} FCFA`}
-                  icon="💰"
+                  icon={DollarSign}
                   color="border-l-4 border-green-500"
                 />
                 <StatCard
                   title="Montant payé"
                   value={`${stats.paidAmount.toLocaleString()} FCFA`}
-                  icon="✅"
+                  icon={Check}
                   color="border-l-4 border-indigo-500"
                 />
                 <StatCard
                   title="Montant restant"
                   value={`${stats.pendingAmount.toLocaleString()} FCFA`}
-                  icon="⏳"
+                  icon={Clock}
                   color="border-l-4 border-yellow-500"
                 />
               </div>

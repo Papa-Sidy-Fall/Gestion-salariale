@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import { Calendar } from 'lucide-react';
 
 const PayRuns = () => {
   const { user } = useAuth();
@@ -167,9 +168,7 @@ const PayRuns = () => {
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
                         <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                          <span className="text-sm font-medium text-gray-700">
-                            📅
-                          </span>
+                          <Calendar className="h-5 w-5 text-gray-700" />
                         </div>
                       </div>
                       <div className="ml-4">

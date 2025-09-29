@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import { DollarSign, Check } from 'lucide-react';
 
 const Payments = () => {
   const { user } = useAuth();
@@ -187,9 +188,7 @@ const Payments = () => {
                           <div className="flex items-center">
                             <div className="flex-shrink-0 h-10 w-10">
                               <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                                <span className="text-sm font-medium text-gray-700">
-                                  💰
-                                </span>
+                                <DollarSign className="h-5 w-5 text-gray-700" />
                               </div>
                             </div>
                             <div className="ml-4">
@@ -242,9 +241,7 @@ const Payments = () => {
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-8 w-8">
                           <div className="h-8 w-8 rounded-full bg-green-300 flex items-center justify-center">
-                            <span className="text-xs font-medium text-green-700">
-                              ✓
-                            </span>
+                            <Check className="h-4 w-4 text-green-700" />
                           </div>
                         </div>
                         <div className="ml-3">
