@@ -6,6 +6,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [selectedCompany, setSelectedCompany] = useState(null);
   const [stats, setStats] = useState({
     totalEmployees: 0,
     totalSalary: 0,
@@ -24,37 +25,40 @@ const Dashboard = () => {
     { month: 'Décembre', amount: 1500000 }
   ]);
 
-  // Charger les vraies données depuis l'API
+  // Charger l'entreprise sélectionnée et les statistiques
   useEffect(() => {
+    const savedCompany = localStorage.getItem('selectedCompany');
+    if (savedCompany) {
+      setSelectedCompany(JSON.parse(savedCompany));
+    }
+
     fetchDashboardStats();
   }, []);
 
   const fetchDashboardStats = async () => {
     try {
-      console.log('Utilisateur connecté:', user);
-      console.log('Rôle:', user?.role);
-      console.log('CompanyId:', user?.companyId);
-
-      // Pour Super Admin, récupérer toutes les données
-      // Pour Admin/Caissier, filtrer par entreprise
-      const companyIdParam = user?.role === 'SUPER_ADMIN' ? '' : (user?.companyId || '');
-
-      console.log('Paramètre companyId utilisé:', companyIdParam);
+      // Déterminer l'entreprise à utiliser :
+      // - Si Super Admin avec entreprise sélectionnée : utiliser celle-ci
+      // - Si Super Admin sans sélection : utiliser son entreprise ou vide
+      // - Si Admin/Caissier : utiliser leur entreprise
+      let companyIdParam = '';
+      if (user?.role === 'SUPER_ADMIN' && selectedCompany) {
+        companyIdParam = selectedCompany.id;
+      } else if (user?.role !== 'SUPER_ADMIN') {
+        companyIdParam = user?.companyId || '';
+      }
 
       // Récupérer les statistiques des employés
       const employeesResponse = await axios.get(`http://localhost:3000/api/employees?companyId=${companyIdParam}`);
       const employees = employeesResponse.data.employees || [];
-      console.log('Employés récupérés:', employees.length, employees);
 
       // Récupérer les statistiques des paiements
       const paymentsResponse = await axios.get(`http://localhost:3000/api/payments/stats?companyId=${companyIdParam}`);
       const paymentStats = paymentsResponse.data.stats;
-      console.log('Statistiques paiements:', paymentStats);
 
       // Récupérer les prochains paiements (bulletins non payés)
       const payRunsResponse = await axios.get(`http://localhost:3000/api/payruns?companyId=${companyIdParam}`);
       const payRuns = payRunsResponse.data.payRuns || [];
-      console.log('Cycles de paie récupérés:', payRuns.length);
 
       const upcomingPayments = [];
       payRuns.forEach(payRun => {
@@ -77,7 +81,6 @@ const Dashboard = () => {
       });
 
       // Calculer les statistiques
-      const totalEmployees = employees.length;
       const activeEmployees = employees.filter(emp => emp.isActive).length;
 
       // Calculer la masse salariale (somme des taux des employés actifs)
@@ -131,17 +134,36 @@ const Dashboard = () => {
             <div className="flex items-center">
               <h1 className="text-2xl font-bold text-gray-900">
                 Tableau de bord
+                {selectedCompany && (
+                  <span className="ml-2 text-sm text-indigo-600 font-normal">
+                    - {selectedCompany.name}
+                  </span>
+                )}
               </h1>
             </div>
             <div className="flex items-center space-x-4">
               {/* Navigation pour Super Admin */}
               {user?.role === 'SUPER_ADMIN' && (
-                <button
-                  onClick={() => navigate('/companies')}
-                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
-                >
-                  Entreprises
-                </button>
+                <>
+                  <button
+                    onClick={() => navigate('/companies')}
+                    className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    Entreprises
+                  </button>
+                  {selectedCompany && (
+                    <button
+                      onClick={() => {
+                        localStorage.removeItem('selectedCompany');
+                        setSelectedCompany(null);
+                        window.location.reload(); // Recharger pour actualiser les données
+                      }}
+                      className="text-orange-600 hover:text-orange-900 px-3 py-2 rounded-md text-sm font-medium"
+                    >
+                      Vue globale
+                    </button>
+                  )}
+                </>
               )}
 
               <span className="text-sm text-gray-700">
@@ -272,7 +294,10 @@ const Dashboard = () => {
               >
                 Gérer employés
               </button>
-              <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium">
+              <button
+                onClick={() => navigate('/payruns')}
+                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+              >
                 Générer bulletins
               </button>
               <button

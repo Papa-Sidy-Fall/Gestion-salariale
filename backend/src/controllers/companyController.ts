@@ -1,16 +1,50 @@
 import { Request, Response } from 'express';
+import bcrypt from 'bcrypt';
+import { PrismaClient } from '@prisma/client';
 import { CompanyService } from '../service/companyService';
 import { AuthRequest } from '../middleware/auth';
+
+const prisma = new PrismaClient();
 
 export class CompanyController {
   static async createCompany(req: AuthRequest, res: Response) {
     try {
-      const companyData = req.body;
-      const company = await CompanyService.createCompany(companyData);
+      const { name, address, phone, email, adminEmail, adminPassword } = req.body;
+
+      // Créer l'entreprise
+      const company = await CompanyService.createCompany({
+        name,
+        address,
+        phone,
+        email
+      });
+
+      // Créer automatiquement un compte Admin pour cette entreprise
+      const hashedPassword = await bcrypt.hash(adminPassword, 10);
+      const admin = await prisma.user.create({
+        data: {
+          email: adminEmail,
+          password: hashedPassword,
+          role: 'ADMIN',
+          companyId: company.id
+        },
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          companyId: true,
+          createdAt: true
+        }
+      });
 
       res.status(201).json({
-        message: 'Entreprise créée avec succès',
-        company
+        message: 'Entreprise et compte Admin créés avec succès',
+        company,
+        admin: {
+          id: admin.id,
+          email: admin.email,
+          role: admin.role
+        }
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message });

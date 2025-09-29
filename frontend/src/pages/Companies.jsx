@@ -12,7 +12,10 @@ const Companies = () => {
     name: '',
     address: '',
     phone: '',
-    email: ''
+    email: '',
+    adminEmail: '',
+    adminPassword: '',
+    confirmPassword: ''
   });
 
   useEffect(() => {
@@ -32,11 +35,31 @@ const Companies = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validation pour création d'entreprise
+    if (!editingCompany) {
+      if (!formData.name || !formData.adminEmail || !formData.adminPassword) {
+        alert('Veuillez remplir tous les champs obligatoires');
+        return;
+      }
+
+      if (formData.adminPassword !== formData.confirmPassword) {
+        alert('Les mots de passe ne correspondent pas');
+        return;
+      }
+
+      if (formData.adminPassword.length < 6) {
+        alert('Le mot de passe doit contenir au moins 6 caractères');
+        return;
+      }
+    }
+
     try {
       if (editingCompany) {
         await axios.put(`http://localhost:3000/api/companies/${editingCompany.id}`, formData);
       } else {
-        await axios.post('http://localhost:3000/api/companies', formData);
+        const response = await axios.post('http://localhost:3000/api/companies', formData);
+        alert(`Entreprise créée avec succès !\nAdmin: ${response.data.admin.email}\nMot de passe: ${formData.adminPassword}`);
       }
 
       fetchCompanies();
@@ -60,6 +83,18 @@ const Companies = () => {
     setShowModal(true);
   };
 
+  const handleSwitchToCompany = (company) => {
+    // Sauvegarder l'entreprise sélectionnée dans le localStorage
+    localStorage.setItem('selectedCompany', JSON.stringify({
+      id: company.id,
+      name: company.name
+    }));
+
+    // Rediriger vers le dashboard avec le contexte de cette entreprise
+    navigate('/dashboard');
+    alert(`Vous êtes maintenant dans le contexte de l'entreprise "${company.name}"`);
+  };
+
   const handleDelete = async (companyId) => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer cette entreprise ?')) return;
 
@@ -78,7 +113,10 @@ const Companies = () => {
       name: '',
       address: '',
       phone: '',
-      email: ''
+      email: '',
+      adminEmail: '',
+      adminPassword: '',
+      confirmPassword: ''
     });
   };
 
@@ -148,6 +186,12 @@ const Companies = () => {
                     </div>
                     {user?.role === 'SUPER_ADMIN' && (
                       <div className="flex items-center space-x-3">
+                        <button
+                          onClick={() => handleSwitchToCompany(company)}
+                          className="text-green-600 hover:text-green-900 text-sm font-medium"
+                        >
+                          Basculer vers cette entreprise
+                        </button>
                         <button
                           onClick={() => handleEdit(company)}
                           className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
@@ -229,6 +273,50 @@ const Companies = () => {
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                   />
                 </div>
+
+                {!editingCompany && (
+                  <>
+                    <div className="border-t pt-4 mt-6">
+                      <h4 className="text-md font-medium text-gray-900 mb-4">Créer le compte Administrateur</h4>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Email de l'Admin *</label>
+                      <input
+                        type="email"
+                        required
+                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                        value={formData.adminEmail}
+                        onChange={(e) => setFormData({...formData, adminEmail: e.target.value})}
+                        placeholder="admin@entreprise.com"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Mot de passe *</label>
+                      <input
+                        type="password"
+                        required
+                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                        value={formData.adminPassword}
+                        onChange={(e) => setFormData({...formData, adminPassword: e.target.value})}
+                        placeholder="Minimum 6 caractères"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">Confirmer le mot de passe *</label>
+                      <input
+                        type="password"
+                        required
+                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                        value={formData.confirmPassword}
+                        onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                        placeholder="Répéter le mot de passe"
+                      />
+                    </div>
+                  </>
+                )}
                 <div className="flex justify-end space-x-3 pt-4">
                   <button
                     type="button"
