@@ -8,6 +8,13 @@ export class EmployeeController {
       console.log('Données reçues:', req.body);
       console.log('Utilisateur:', req.user);
 
+      const { companyId } = req.body;
+
+      // Vérifier les permissions : Super admin peut créer partout, Admin seulement dans son entreprise
+      if (req.user?.role !== 'SUPER_ADMIN' && req.user?.companyId !== companyId) {
+        return res.status(403).json({ error: 'Accès non autorisé à cette entreprise' });
+      }
+
       const employeeData = {
         ...req.body,
         companyId: req.user?.role === 'SUPER_ADMIN' ? req.body.companyId : req.user?.companyId

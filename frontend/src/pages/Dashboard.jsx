@@ -34,7 +34,8 @@ const Dashboard = () => {
   useEffect(() => {
     const savedCompany = localStorage.getItem('selectedCompany');
     if (savedCompany) {
-      setSelectedCompany(JSON.parse(savedCompany));
+      const companyData = JSON.parse(savedCompany);
+      setSelectedCompany(companyData);
     }
 
     fetchDashboardStats();
@@ -47,8 +48,11 @@ const Dashboard = () => {
       // - Si Super Admin sans sélection : utiliser son entreprise ou vide
       // - Si Admin/Caissier : utiliser leur entreprise
       let companyIdParam = '';
-      if (user?.role === 'SUPER_ADMIN' && selectedCompany) {
-        companyIdParam = selectedCompany.id;
+      const savedCompany = localStorage.getItem('selectedCompany');
+
+      if (user?.role === 'SUPER_ADMIN' && savedCompany) {
+        const companyData = JSON.parse(savedCompany);
+        companyIdParam = companyData.id;
       } else if (user?.role !== 'SUPER_ADMIN') {
         companyIdParam = user?.companyId || '';
       }
@@ -108,7 +112,7 @@ const Dashboard = () => {
     }
   };
 
-  const StatCard = ({ title, value, icon: Icon,icon2: Icon2, color }) => (
+  const StatCard = ({ title, value, icon: Icon, color }) => (
     <div className={`bg-white overflow-hidden shadow rounded-lg ${color}`}>
       <div className="p-5">
         <div className="flex items-center">
@@ -223,8 +227,8 @@ const Dashboard = () => {
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           {/* Contenu selon le rôle */}
-          {user?.role === 'SUPER_ADMIN' ? (
-            /* Vue Super Admin - Résumé des entreprises */
+          {user?.role === 'SUPER_ADMIN' && !selectedCompany ? (
+            /* Vue Super Admin - Résumé des entreprises (sans entreprise sélectionnée) */
             <div className="bg-white shadow overflow-hidden sm:rounded-md">
               <div className="px-4 py-5 sm:px-6">
                 <h3 className="text-lg leading-6 font-medium text-gray-900">
@@ -250,7 +254,7 @@ const Dashboard = () => {
                 </div>
               </div>
             </div>
-          ) : user?.role === 'ADMIN' ? (
+          ) : (user?.role === 'ADMIN' || (user?.role === 'SUPER_ADMIN' && selectedCompany)) ? (
             /* Vue Admin - Dashboard complet */
             <>
               {/* Stats Cards */}

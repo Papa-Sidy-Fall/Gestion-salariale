@@ -17,6 +17,6 @@ router.post('/login', AuthController.login);
 
 // Routes protégées
 router.get('/profile', authenticateToken, AuthController.getProfile);
-router.get('/users', authenticateToken, authorizeRoles('ADMIN'), AuthController.getUsersByCompany);
+router.get('/users', authenticateToken, authorizeRoles('SUPER_ADMIN', 'ADMIN'), AuthController.getUsersByCompany);
 
 export default router;

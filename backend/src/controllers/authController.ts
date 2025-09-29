@@ -31,6 +31,16 @@ export class AuthController {
         return res.status(403).json({ error: 'Seul un super admin peut créer un compte super admin' });
       }
 
+      // Pour les rôles ADMIN et CAISSIER, un companyId est requis
+      if ((role === UserRole.ADMIN || role === UserRole.CAISSIER) && !companyId) {
+        return res.status(400).json({ error: 'ID entreprise requis pour ce rôle' });
+      }
+
+      // Vérifier les permissions : Super admin peut créer partout, Admin seulement dans son entreprise
+      if (req.user?.role !== UserRole.SUPER_ADMIN && req.user?.companyId !== companyId) {
+        return res.status(403).json({ error: 'Accès non autorisé à cette entreprise' });
+      }
+
       const user = await AuthService.register(email, password, role, companyId);
 
       res.status(201).json({
