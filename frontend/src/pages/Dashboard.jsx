@@ -133,8 +133,10 @@ const Dashboard = () => {
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <h1 className="text-2xl font-bold text-gray-900">
-                Tableau de bord
-                {selectedCompany && (
+                {user?.role === 'SUPER_ADMIN' ? 'Gestion des Entreprises' :
+                 user?.role === 'ADMIN' ? 'Tableau de bord' :
+                 'Gestion des Paiements'}
+                {selectedCompany && user?.role === 'SUPER_ADMIN' && (
                   <span className="ml-2 text-sm text-indigo-600 font-normal">
                     - {selectedCompany.name}
                   </span>
@@ -142,7 +144,7 @@ const Dashboard = () => {
               </h1>
             </div>
             <div className="flex items-center space-x-4">
-              {/* Navigation pour Super Admin */}
+              {/* Navigation selon le rôle */}
               {user?.role === 'SUPER_ADMIN' && (
                 <>
                   <button
@@ -156,7 +158,7 @@ const Dashboard = () => {
                       onClick={() => {
                         localStorage.removeItem('selectedCompany');
                         setSelectedCompany(null);
-                        window.location.reload(); // Recharger pour actualiser les données
+                        window.location.reload();
                       }}
                       className="text-orange-600 hover:text-orange-900 px-3 py-2 rounded-md text-sm font-medium"
                     >
@@ -166,8 +168,36 @@ const Dashboard = () => {
                 </>
               )}
 
+              {user?.role === 'ADMIN' && (
+                <>
+                  <button
+                    onClick={() => navigate('/employees')}
+                    className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    Employés
+                  </button>
+                  <button
+                    onClick={() => navigate('/payruns')}
+                    className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    Cycles de paie
+                  </button>
+                </>
+              )}
+
+              {user?.role === 'CAISSIER' && (
+                <button
+                  onClick={() => navigate('/payments')}
+                  className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                >
+                  Paiements
+                </button>
+              )}
+
               <span className="text-sm text-gray-700">
-                Bienvenue, {user?.email}
+                {user?.role === 'SUPER_ADMIN' ? 'Super Admin' :
+                 user?.role === 'ADMIN' ? `Admin - ${user?.company?.name || 'Entreprise'}` :
+                 `Caissier - ${user?.company?.name || 'Entreprise'}`}
               </span>
               <button
                 onClick={logout}
@@ -183,33 +213,64 @@ const Dashboard = () => {
       {/* Main content */}
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
-            <StatCard
-              title="Employés actifs"
-              value={stats.totalEmployees}
-              icon="👥"
-              color="border-l-4 border-blue-500"
-            />
-            <StatCard
-              title="Masse salariale"
-              value={`${stats.totalSalary.toLocaleString()} FCFA`}
-              icon="💰"
-              color="border-l-4 border-green-500"
-            />
-            <StatCard
-              title="Montant payé"
-              value={`${stats.paidAmount.toLocaleString()} FCFA`}
-              icon="✅"
-              color="border-l-4 border-indigo-500"
-            />
-            <StatCard
-              title="Montant restant"
-              value={`${stats.pendingAmount.toLocaleString()} FCFA`}
-              icon="⏳"
-              color="border-l-4 border-yellow-500"
-            />
-          </div>
+          {/* Contenu selon le rôle */}
+          {user?.role === 'SUPER_ADMIN' ? (
+            /* Vue Super Admin - Résumé des entreprises */
+            <div className="bg-white shadow overflow-hidden sm:rounded-md">
+              <div className="px-4 py-5 sm:px-6">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">
+                  Vue d'ensemble des entreprises
+                </h3>
+                <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                  Gérez toutes les entreprises depuis cette interface.
+                </p>
+              </div>
+              <div className="border-t border-gray-200">
+                <div className="px-4 py-5 sm:p-6">
+                  <div className="text-center">
+                    <button
+                      onClick={() => navigate('/companies')}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-md text-lg font-medium"
+                    >
+                      Accéder à la gestion des entreprises
+                    </button>
+                    <p className="mt-2 text-sm text-gray-500">
+                      Créez, modifiez et supprimez des entreprises
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : user?.role === 'ADMIN' ? (
+            /* Vue Admin - Dashboard complet */
+            <>
+              {/* Stats Cards */}
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+                <StatCard
+                  title="Employés actifs"
+                  value={stats.totalEmployees}
+                  icon="👥"
+                  color="border-l-4 border-blue-500"
+                />
+                <StatCard
+                  title="Masse salariale"
+                  value={`${stats.totalSalary.toLocaleString()} FCFA`}
+                  icon="💰"
+                  color="border-l-4 border-green-500"
+                />
+                <StatCard
+                  title="Montant payé"
+                  value={`${stats.paidAmount.toLocaleString()} FCFA`}
+                  icon="✅"
+                  color="border-l-4 border-indigo-500"
+                />
+                <StatCard
+                  title="Montant restant"
+                  value={`${stats.pendingAmount.toLocaleString()} FCFA`}
+                  icon="⏳"
+                  color="border-l-4 border-yellow-500"
+                />
+              </div>
 
           {/* Charts and additional content */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -308,6 +369,35 @@ const Dashboard = () => {
               </button>
             </div>
           </div>
+            </>
+          ) : user?.role === 'CAISSIER' ? (
+            /* Vue Caissier - Paiements uniquement */
+            <div className="bg-white shadow overflow-hidden sm:rounded-md">
+              <div className="px-4 py-5 sm:px-6">
+                <h3 className="text-lg leading-6 font-medium text-gray-900">
+                  Gestion des paiements
+                </h3>
+                <p className="mt-1 max-w-2xl text-sm text-gray-500">
+                  Enregistrez les paiements, générez les reçus et consultez les bulletins.
+                </p>
+              </div>
+              <div className="border-t border-gray-200">
+                <div className="px-4 py-5 sm:p-6">
+                  <div className="text-center">
+                    <button
+                      onClick={() => navigate('/payments')}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-md text-lg font-medium"
+                    >
+                      Accéder aux paiements
+                    </button>
+                    <p className="mt-2 text-sm text-gray-500">
+                      Gérer les paiements et générer les reçus
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

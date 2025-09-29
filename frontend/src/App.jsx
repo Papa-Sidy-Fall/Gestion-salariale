@@ -26,7 +26,7 @@ function App() {
             <Route
               path="/employees"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['ADMIN']}>
                   <Employees />
                 </ProtectedRoute>
               }
@@ -34,7 +34,7 @@ function App() {
             <Route
               path="/payruns"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['ADMIN']}>
                   <PayRuns />
                 </ProtectedRoute>
               }
@@ -42,7 +42,7 @@ function App() {
             <Route
               path="/payments"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['CAISSIER']}>
                   <Payments />
                 </ProtectedRoute>
               }
@@ -63,7 +63,7 @@ function App() {
   );
 }
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, allowedRoles }) {
   const { user, loading } = useAuth();
 
   if (loading) {
@@ -76,6 +76,11 @@ function ProtectedRoute({ children }) {
 
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Si des rôles sont spécifiés, vérifier que l'utilisateur a le bon rôle
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return children;
