@@ -28,13 +28,19 @@ const UserManagement = ({ companyId }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (formData.password !== formData.confirmPassword) {
-      alert('Les mots de passe ne correspondent pas');
+    // Validation avec regex pour la création d'utilisateur
+    if (!validateEmail(formData.email)) {
+      alert('Veuillez saisir une adresse email valide');
       return;
     }
 
-    if (formData.password.length < 6) {
-      alert('Le mot de passe doit contenir au moins 6 caractères');
+    if (!validatePassword(formData.password)) {
+      alert('Le mot de passe doit contenir au moins 6 caractères avec au moins une lettre et un chiffre');
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      alert('Les mots de passe ne correspondent pas');
       return;
     }
 
@@ -114,7 +120,6 @@ const UserManagement = ({ companyId }) => {
                   <label className="block text-sm font-medium text-gray-700">Email *</label>
                   <input
                     type="email"
-                    required
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -126,7 +131,6 @@ const UserManagement = ({ companyId }) => {
                   <label className="block text-sm font-medium text-gray-700">Mot de passe *</label>
                   <input
                     type="password"
-                    required
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                     value={formData.password}
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
@@ -138,7 +142,6 @@ const UserManagement = ({ companyId }) => {
                   <label className="block text-sm font-medium text-gray-700">Confirmer le mot de passe *</label>
                   <input
                     type="password"
-                    required
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
@@ -210,8 +213,61 @@ const Employees = () => {
     }
   };
 
+  // Fonctions de validation avec regex
+  const validateName = (name) => {
+    // Lettres, espaces, apostrophes, tirets (noms français)
+    const nameRegex = /^[A-Za-zÀ-ÿ\s\-']{2,}$/;
+    return nameRegex.test(name);
+  };
+
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePassword = (password) => {
+    // Au moins 6 caractères, au moins une lettre et un chiffre
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{6,}$/;
+    return passwordRegex.test(password);
+  };
+
+  const validateAmount = (amount) => {
+    // Nombre positif avec décimales optionnelles
+    const amountRegex = /^\d+(\.\d{1,2})?$/;
+    const num = parseFloat(amount);
+    return amountRegex.test(amount) && num > 0;
+  };
+
+  const validatePosition = (position) => {
+    // Au moins 2 caractères, lettres, chiffres, espaces
+    const positionRegex = /^[A-Za-zÀ-ÿ0-9\s\-&]{2,}$/;
+    return positionRegex.test(position);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validation du formulaire employé
+    if (!validateName(formData.firstName)) {
+      alert('Le prénom doit contenir au moins 2 caractères (lettres, espaces, apostrophes, tirets autorisés)');
+      return;
+    }
+
+    if (!validateName(formData.lastName)) {
+      alert('Le nom doit contenir au moins 2 caractères (lettres, espaces, apostrophes, tirets autorisés)');
+      return;
+    }
+
+    if (!validatePosition(formData.position)) {
+      alert('Le poste doit contenir au moins 2 caractères');
+      return;
+    }
+
+    if (!validateAmount(formData.rate)) {
+      alert('Le salaire doit être un nombre positif valide');
+      return;
+    }
+
     try {
       const data = {
         ...formData,
@@ -235,7 +291,6 @@ const Employees = () => {
       alert('Erreur lors de la sauvegarde: ' + (error.response?.data?.error || error.message));
     }
   };
-
   const handleEdit = (employee) => {
     setEditingEmployee(employee);
     setFormData({
@@ -423,7 +478,6 @@ const Employees = () => {
                     <label className="block text-sm font-medium text-gray-700">Prénom</label>
                     <input
                       type="text"
-                      required
                       className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                       value={formData.firstName}
                       onChange={(e) => setFormData({...formData, firstName: e.target.value})}
@@ -433,7 +487,6 @@ const Employees = () => {
                     <label className="block text-sm font-medium text-gray-700">Nom</label>
                     <input
                       type="text"
-                      required
                       className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                       value={formData.lastName}
                       onChange={(e) => setFormData({...formData, lastName: e.target.value})}
@@ -444,7 +497,6 @@ const Employees = () => {
                   <label className="block text-sm font-medium text-gray-700">Poste</label>
                   <input
                     type="text"
-                    required
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                     value={formData.position}
                     onChange={(e) => setFormData({...formData, position: e.target.value})}
@@ -454,7 +506,6 @@ const Employees = () => {
                   <div>
                     <label className="block text-sm font-medium text-gray-700">Type de contrat</label>
                     <select
-                      required
                       className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                       value={formData.contractType}
                       onChange={(e) => setFormData({...formData, contractType: e.target.value})}
@@ -468,7 +519,6 @@ const Employees = () => {
                     <label className="block text-sm font-medium text-gray-700">Salaire/Taux</label>
                     <input
                       type="number"
-                      required
                       className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                       value={formData.rate}
                       onChange={(e) => setFormData({...formData, rate: e.target.value})}

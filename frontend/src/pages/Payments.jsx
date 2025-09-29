@@ -58,8 +58,23 @@ const Payments = () => {
     }
   };
 
+  // Fonction de validation pour le montant
+  const validateAmount = (amount) => {
+    // Nombre positif avec décimales optionnelles
+    const amountRegex = /^\d+(\.\d{1,2})?$/;
+    const num = parseFloat(amount);
+    return amountRegex.test(amount) && num > 0;
+  };
+
   const handlePaymentSubmit = async (e) => {
     e.preventDefault();
+
+    // Validation du montant avec regex
+    if (!validateAmount(formData.amount)) {
+      alert('Veuillez saisir un montant valide (nombre positif avec maximum 2 décimales)');
+      return;
+    }
+
     try {
       await axios.post('http://localhost:3000/api/payments', {
         payslipId: selectedPayslip.id,
@@ -284,7 +299,6 @@ const Payments = () => {
                   <label className="block text-sm font-medium text-gray-700">Montant</label>
                   <input
                     type="number"
-                    required
                     step="0.01"
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                     value={formData.amount}

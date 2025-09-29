@@ -10,10 +10,34 @@ const Login = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  // Fonctions de validation avec regex
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePassword = (password) => {
+    // Au moins 1 caractère pour la connexion (validation côté serveur pour la sécurité)
+    return password.length > 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    // Validation avec regex
+    if (!validateEmail(email)) {
+      setError('Veuillez saisir une adresse email valide');
+      setLoading(false);
+      return;
+    }
+
+    if (!validatePassword(password)) {
+      setError('Veuillez saisir votre mot de passe');
+      setLoading(false);
+      return;
+    }
 
     try {
       await login(email, password);
@@ -48,7 +72,6 @@ const Login = () => {
                 id="email"
                 name="email"
                 type="email"
-                required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="Adresse email"
                 value={email}
@@ -63,7 +86,6 @@ const Login = () => {
                 id="password"
                 name="password"
                 type="password"
-                required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="Mot de passe"
                 value={password}

@@ -27,8 +27,26 @@ const PayRuns = () => {
     }
   };
 
+  // Fonction de validation pour la période
+  const validatePeriod = (period) => {
+    // Format YYYY-MM
+    const periodRegex = /^\d{4}-\d{2}$/;
+    if (!periodRegex.test(period)) return false;
+
+    const [year, month] = period.split('-').map(Number);
+    // Vérifier que le mois est entre 01 et 12
+    return month >= 1 && month <= 12 && year >= 2000 && year <= 2100;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validation de la période
+    if (!validatePeriod(formData.period)) {
+      alert('Veuillez saisir une période valide au format YYYY-MM (ex: 2024-01)');
+      return;
+    }
+
     try {
       await axios.post('http://localhost:3000/api/payruns', {
         ...formData,
@@ -241,7 +259,6 @@ const PayRuns = () => {
                   <label className="block text-sm font-medium text-gray-700">Période (YYYY-MM)</label>
                   <input
                     type="month"
-                    required
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                     value={formData.period}
                     onChange={(e) => setFormData({...formData, period: e.target.value})}

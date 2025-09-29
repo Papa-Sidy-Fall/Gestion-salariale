@@ -33,13 +33,47 @@ const Companies = () => {
     }
   };
 
+  // Fonctions de validation avec regex
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePassword = (password) => {
+    // Au moins 6 caractères, au moins une lettre et un chiffre
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{6,}$/;
+    return passwordRegex.test(password);
+  };
+
+  const validatePhone = (phone) => {
+    // Format téléphone international ou local
+    const phoneRegex = /^(\+?[1-9]\d{0,3})?[-.\s]?\(?[0-9]{1,4}\)?[-.\s]?[0-9]{1,4}[-.\s]?[0-9]{1,9}$/;
+    return phoneRegex.test(phone) || phone === '';
+  };
+
+  const validateCompanyName = (name) => {
+    // Au moins 2 caractères, lettres, chiffres, espaces, tirets
+    const nameRegex = /^[A-Za-zÀ-ÿ0-9\s\-&]{2,}$/;
+    return nameRegex.test(name);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validation pour création d'entreprise
+    // Validations avec regex
     if (!editingCompany) {
-      if (!formData.name || !formData.adminEmail || !formData.adminPassword) {
-        alert('Veuillez remplir tous les champs obligatoires');
+      if (!validateCompanyName(formData.name)) {
+        alert('Le nom de l\'entreprise doit contenir au moins 2 caractères (lettres, chiffres, espaces, tirets autorisés)');
+        return;
+      }
+
+      if (!validateEmail(formData.adminEmail)) {
+        alert('Veuillez saisir une adresse email valide');
+        return;
+      }
+
+      if (!validatePassword(formData.adminPassword)) {
+        alert('Le mot de passe doit contenir au moins 6 caractères avec au moins une lettre et un chiffre');
         return;
       }
 
@@ -47,11 +81,16 @@ const Companies = () => {
         alert('Les mots de passe ne correspondent pas');
         return;
       }
+    }
 
-      if (formData.adminPassword.length < 6) {
-        alert('Le mot de passe doit contenir au moins 6 caractères');
-        return;
-      }
+    if (formData.phone && !validatePhone(formData.phone)) {
+      alert('Veuillez saisir un numéro de téléphone valide');
+      return;
+    }
+
+    if (formData.email && !validateEmail(formData.email)) {
+      alert('Veuillez saisir une adresse email valide pour l\'entreprise');
+      return;
     }
 
     try {
@@ -237,10 +276,9 @@ const Companies = () => {
               </h3>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Nom de l'entreprise *</label>
+                  <label className="block text-sm font-medium text-gray-700">Nom de l'entreprise</label>
                   <input
                     type="text"
-                    required
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -281,10 +319,9 @@ const Companies = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Email de l'Admin *</label>
+                      <label className="block text-sm font-medium text-gray-700">Email de l'Admin</label>
                       <input
                         type="email"
-                        required
                         className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                         value={formData.adminEmail}
                         onChange={(e) => setFormData({...formData, adminEmail: e.target.value})}
@@ -293,10 +330,9 @@ const Companies = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Mot de passe *</label>
+                      <label className="block text-sm font-medium text-gray-700">Mot de passe</label>
                       <input
                         type="password"
-                        required
                         className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                         value={formData.adminPassword}
                         onChange={(e) => setFormData({...formData, adminPassword: e.target.value})}
@@ -305,10 +341,9 @@ const Companies = () => {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Confirmer le mot de passe *</label>
+                      <label className="block text-sm font-medium text-gray-700">Confirmer le mot de passe</label>
                       <input
                         type="password"
-                        required
                         className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                         value={formData.confirmPassword}
                         onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
