@@ -87,6 +87,7 @@ export class AuthController {
       }
 
       // Vérifier que l'utilisateur a accès à cette entreprise
+      // Super admin peut voir tous, Admin peut voir son entreprise
       if (req.user?.role !== 'SUPER_ADMIN' && req.user?.companyId !== companyId) {
         return res.status(403).json({ error: 'Accès non autorisé' });
       }

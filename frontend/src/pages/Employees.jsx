@@ -16,6 +16,18 @@ const UserManagement = ({ companyId }) => {
     fetchUsers();
   }, [companyId]);
 
+  // Fonctions de validation avec regex
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePassword = (password) => {
+    // Au moins 6 caractères, au moins une lettre et un chiffre
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{6,}$/;
+    return passwordRegex.test(password);
+  };
+
   const fetchUsers = async () => {
     try {
       const response = await axios.get(`http://localhost:3000/api/auth/users?companyId=${companyId}`);
