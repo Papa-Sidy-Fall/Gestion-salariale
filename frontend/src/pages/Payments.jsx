@@ -22,7 +22,22 @@ const Payments = () => {
 
   const fetchPayments = async () => {
     try {
-      const response = await axios.get('http://localhost:3000/api/payments');
+      // Déterminer l'entreprise à utiliser selon le rôle
+      let companyIdParam = '';
+      if (user?.role === 'SUPER_ADMIN') {
+        // Pour Super Admin, on peut voir tous les paiements ou filtrer par entreprise sélectionnée
+        // Pour l'instant, on voit tous les paiements
+        companyIdParam = '';
+      } else if (user?.role !== 'SUPER_ADMIN') {
+        // Pour Admin et Caissier, filtrer par leur entreprise
+        companyIdParam = user?.companyId || '';
+      }
+
+      const url = companyIdParam
+        ? `http://localhost:3000/api/payments/company/${companyIdParam}`
+        : 'http://localhost:3000/api/payments';
+
+      const response = await axios.get(url);
       setPayments(response.data.payments);
     } catch (error) {
       console.error('Erreur lors du chargement des paiements:', error);
@@ -31,8 +46,23 @@ const Payments = () => {
 
   const fetchPendingPayslips = async () => {
     try {
+      // Déterminer l'entreprise à utiliser selon le rôle
+      let companyIdParam = '';
+      if (user?.role === 'SUPER_ADMIN') {
+        // Pour Super Admin, on peut voir tous les bulletins ou filtrer par entreprise sélectionnée
+        // Pour l'instant, on voit tous les bulletins
+        companyIdParam = '';
+      } else if (user?.role !== 'SUPER_ADMIN') {
+        // Pour Admin et Caissier, filtrer par leur entreprise
+        companyIdParam = user?.companyId || '';
+      }
+
       // Récupérer tous les cycles de paie pour trouver les bulletins en attente
-      const payRunsResponse = await axios.get('http://localhost:3000/api/payruns');
+      const url = companyIdParam
+        ? `http://localhost:3000/api/payruns?companyId=${companyIdParam}`
+        : 'http://localhost:3000/api/payruns';
+
+      const payRunsResponse = await axios.get(url);
       const payRuns = payRunsResponse.data.payRuns;
 
       // Extraire tous les bulletins des cycles approuvés

@@ -364,7 +364,7 @@ const Dashboard = () => {
                 Gérer employés
               </button>
               <button
-                onClick={() => navigate('/payruns')}
+                onClick={() => navigate('/payruns?tab=generate')}
                 className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium"
               >
                 Générer bulletins

@@ -80,6 +80,28 @@ export class EmployeeService {
     return employee;
   }
 
+  static async toggleEmployeeStatus(id: string) {
+    const employee = await prisma.employee.findUnique({
+      where: { id }
+    });
+
+    if (!employee) {
+      throw new Error('Employé non trouvé');
+    }
+
+    const updatedEmployee = await prisma.employee.update({
+      where: { id },
+      data: {
+        isActive: !employee.isActive
+      },
+      include: {
+        company: true
+      }
+    });
+
+    return updatedEmployee;
+  }
+
   static async deleteEmployee(id: string) {
     // Vérifier s'il y a des bulletins non payés
     const unpaidPayslips = await prisma.payslip.count({

@@ -305,13 +305,13 @@ const Employees = () => {
     setShowModal(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Êtes-vous sûr de vouloir désactiver cet employé ?')) {
+  const handleToggleStatus = async (id) => {
+    if (window.confirm('Êtes-vous sûr de vouloir changer le statut de cet employé ?')) {
       try {
-        await axios.delete(`http://localhost:3000/api/employees/${id}`);
+        await axios.patch(`http://localhost:3000/api/employees/${id}/toggle-status`);
         fetchEmployees();
       } catch (error) {
-        console.error('Erreur lors de la suppression:', error);
+        console.error('Erreur lors du changement de statut:', error);
       }
     }
   };
@@ -441,10 +441,10 @@ const Employees = () => {
                             Modifier
                           </button>
                           <button
-                            onClick={() => handleDelete(employee.id)}
+                            onClick={() => handleToggleStatus(employee.id)}
                             className="text-red-600 hover:text-red-900 text-sm font-medium"
                           >
-                            Désactiver
+                            {employee.isActive ? 'Désactiver' : 'Activer'}
                           </button>
                         </div>
                       </div>

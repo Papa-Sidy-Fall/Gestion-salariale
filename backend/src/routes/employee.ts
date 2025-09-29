@@ -18,6 +18,7 @@ router.get('/', authenticateToken, EmployeeController.getAllEmployees);
 // Routes pour les employés spécifiques
 router.get('/:id', authenticateToken, EmployeeController.getEmployeeById);
 router.put('/:id', authenticateToken, authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN), EmployeeController.updateEmployee);
+router.patch('/:id/toggle-status', authenticateToken, authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN), EmployeeController.toggleEmployeeStatus);
 router.delete('/:id', authenticateToken, authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN), EmployeeController.deleteEmployee);
 
 // Routes pour les statistiques et filtrage

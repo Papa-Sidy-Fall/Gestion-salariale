@@ -74,6 +74,27 @@ export class EmployeeController {
     }
   }
 
+  static async toggleEmployeeStatus(req: AuthRequest, res: Response) {
+    try {
+      const { id } = req.params;
+      if (!id) {
+        return res.status(400).json({ error: 'ID employé requis' });
+      }
+
+      const employee = await EmployeeService.toggleEmployeeStatus(id);
+
+      res.json({
+        message: 'Statut de l\'employé modifié avec succès',
+        employee
+      });
+    } catch (error: any) {
+      if (error.message === 'Employé non trouvé') {
+        return res.status(404).json({ error: error.message });
+      }
+      res.status(500).json({ error: error.message });
+    }
+  }
+
   static async deleteEmployee(req: AuthRequest, res: Response) {
     try {
       const { id } = req.params;

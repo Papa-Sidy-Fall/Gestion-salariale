@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import { AuthService } from '../service/authService';
 import { AuthRequest } from '../middleware/auth';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 enum UserRole {
   SUPER_ADMIN = 'SUPER_ADMIN',
@@ -70,6 +73,35 @@ export class AuthController {
       const user = await AuthService.getUserById(req.user.id);
 
       res.json({ user });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  static async getUsersByCompany(req: AuthRequest, res: Response) {
+    try {
+      const { companyId } = req.query;
+
+      if (!companyId || typeof companyId !== 'string') {
+        return res.status(400).json({ error: 'ID entreprise requis' });
+      }
+
+      // Vérifier que l'utilisateur a accès à cette entreprise
+      if (req.user?.role !== 'SUPER_ADMIN' && req.user?.companyId !== companyId) {
+        return res.status(403).json({ error: 'Accès non autorisé' });
+      }
+
+      const users = await prisma.user.findMany({
+        where: { companyId },
+        select: {
+          id: true,
+          email: true,
+          role: true,
+          createdAt: true
+        }
+      });
+
+      res.json({ users });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
