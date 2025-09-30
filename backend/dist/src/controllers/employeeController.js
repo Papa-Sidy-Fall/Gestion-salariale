@@ -4,11 +4,16 @@ exports.EmployeeController = void 0;
 const employeeService_1 = require("../service/employeeService");
 class EmployeeController {
     static async createEmployee(req, res) {
-        var _a, _b;
+        var _a, _b, _c, _d;
         try {
             console.log('Données reçues:', req.body);
             console.log('Utilisateur:', req.user);
-            const employeeData = Object.assign(Object.assign({}, req.body), { companyId: ((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) === 'SUPER_ADMIN' ? req.body.companyId : (_b = req.user) === null || _b === void 0 ? void 0 : _b.companyId });
+            const { companyId } = req.body;
+            // Vérifier les permissions : Super admin peut créer partout, Admin seulement dans son entreprise
+            if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== 'SUPER_ADMIN' && ((_b = req.user) === null || _b === void 0 ? void 0 : _b.companyId) !== companyId) {
+                return res.status(403).json({ error: 'Accès non autorisé à cette entreprise' });
+            }
+            const employeeData = Object.assign(Object.assign({}, req.body), { companyId: ((_c = req.user) === null || _c === void 0 ? void 0 : _c.role) === 'SUPER_ADMIN' ? req.body.companyId : (_d = req.user) === null || _d === void 0 ? void 0 : _d.companyId });
             console.log('Données à créer:', employeeData);
             const employee = await employeeService_1.EmployeeService.createEmployee(employeeData);
             res.status(201).json({
@@ -60,6 +65,25 @@ class EmployeeController {
             });
         }
         catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+    static async toggleEmployeeStatus(req, res) {
+        try {
+            const { id } = req.params;
+            if (!id) {
+                return res.status(400).json({ error: 'ID employé requis' });
+            }
+            const employee = await employeeService_1.EmployeeService.toggleEmployeeStatus(id);
+            res.json({
+                message: 'Statut de l\'employé modifié avec succès',
+                employee
+            });
+        }
+        catch (error) {
+            if (error.message === 'Employé non trouvé') {
+                return res.status(404).json({ error: error.message });
+            }
             res.status(500).json({ error: error.message });
         }
     }

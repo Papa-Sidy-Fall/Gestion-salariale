@@ -11,7 +11,7 @@ enum UserRole {
   EMPLOYEE = 'EMPLOYEE'
 }
 
-// Routes pour créer et lister tous les employés (Super Admin uniquement)
+// Routes pour créer et lister tous les employés (Super Admin et Admin)
 router.post('/', authenticateToken, authorizeRoles(UserRole.SUPER_ADMIN, UserRole.ADMIN), EmployeeController.createEmployee);
 router.get('/', authenticateToken, EmployeeController.getAllEmployees);
 

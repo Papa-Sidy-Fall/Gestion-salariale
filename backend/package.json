@@ -19,12 +19,16 @@
   "dependencies": {
     "@prisma/client": "^6.16.2",
     "@types/cors": "^2.8.19",
+    "@types/multer": "^2.0.0",
+    "@types/puppeteer": "^5.4.7",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
     "mysql2": "^3.15.1",
     "prisma": "^6.16.2",
+    "puppeteer": "^24.22.3",
     "zod": "^4.1.11"
   },
   "devDependencies": {

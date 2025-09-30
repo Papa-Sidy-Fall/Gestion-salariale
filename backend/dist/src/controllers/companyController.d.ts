@@ -7,5 +7,7 @@ export declare class CompanyController {
     static updateCompany(req: AuthRequest, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     static deleteCompany(req: AuthRequest, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     static getCompanyStats(req: AuthRequest, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+    static uploadLogo(req: AuthRequest, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
+    static updateCompanyColor(req: AuthRequest, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 }
 //# sourceMappingURL=companyController.d.ts.map

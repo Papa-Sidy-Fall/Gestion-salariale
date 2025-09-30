@@ -16,6 +16,8 @@ export declare class EmployeeService {
             name: string;
             address: string | null;
             phone: string | null;
+            logo: string | null;
+            color: string | null;
         };
     } & {
         id: string;
@@ -39,6 +41,8 @@ export declare class EmployeeService {
             name: string;
             address: string | null;
             phone: string | null;
+            logo: string | null;
+            color: string | null;
         };
         payslips: ({
             payRun: {
@@ -92,6 +96,8 @@ export declare class EmployeeService {
             name: string;
             address: string | null;
             phone: string | null;
+            logo: string | null;
+            color: string | null;
         };
         payslips: ({
             payRun: {
@@ -145,6 +151,33 @@ export declare class EmployeeService {
             name: string;
             address: string | null;
             phone: string | null;
+            logo: string | null;
+            color: string | null;
+        };
+    } & {
+        id: string;
+        companyId: string;
+        createdAt: Date;
+        updatedAt: Date;
+        firstName: string;
+        lastName: string;
+        position: string;
+        contractType: import(".prisma/client").$Enums.ContractType;
+        rate: number;
+        bankDetails: string | null;
+        isActive: boolean;
+    }>;
+    static toggleEmployeeStatus(id: string): Promise<{
+        company: {
+            id: string;
+            email: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+            name: string;
+            address: string | null;
+            phone: string | null;
+            logo: string | null;
+            color: string | null;
         };
     } & {
         id: string;
@@ -168,6 +201,8 @@ export declare class EmployeeService {
             name: string;
             address: string | null;
             phone: string | null;
+            logo: string | null;
+            color: string | null;
         };
     } & {
         id: string;
@@ -267,6 +302,8 @@ export declare class EmployeeService {
             name: string;
             address: string | null;
             phone: string | null;
+            logo: string | null;
+            color: string | null;
         };
         payslips: ({
             payRun: {

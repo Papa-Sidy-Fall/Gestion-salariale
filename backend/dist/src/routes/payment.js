@@ -23,5 +23,7 @@ router.get('/company/:companyId', auth_1.authenticateToken, paymentController_1.
 router.delete('/:id', auth_1.authenticateToken, (0, auth_1.authorizeRoles)(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.CAISSIER), paymentController_1.PaymentController.deletePayment);
 // Statistiques
 router.get('/stats', auth_1.authenticateToken, paymentController_1.PaymentController.getPaymentStats);
+// Génération de factures PDF (accessible aux caissiers et admins)
+router.get('/:paymentId/invoice', auth_1.authenticateToken, (0, auth_1.authorizeRoles)(UserRole.ADMIN, UserRole.CAISSIER), paymentController_1.PaymentController.generateInvoicePDF);
 exports.default = router;
 //# sourceMappingURL=payment.js.map

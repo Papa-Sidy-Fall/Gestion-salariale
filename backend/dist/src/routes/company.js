@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const companyController_1 = require("../controllers/companyController");
 const auth_1 = require("../middleware/auth");
+const upload_1 = require("../middleware/upload");
 const router = express_1.default.Router();
 var UserRole;
 (function (UserRole) {
@@ -22,5 +23,8 @@ router.delete('/:id', auth_1.authenticateToken, (0, auth_1.authorizeRoles)(UserR
 router.get('/:id', auth_1.authenticateToken, companyController_1.CompanyController.getCompanyById);
 router.put('/:id', auth_1.authenticateToken, (0, auth_1.authorizeRoles)(UserRole.SUPER_ADMIN), companyController_1.CompanyController.updateCompany);
 router.get('/:companyId/stats', auth_1.authenticateToken, companyController_1.CompanyController.getCompanyStats);
+// Routes pour logo et couleur (Super Admin uniquement)
+router.put('/:companyId/logo', auth_1.authenticateToken, (0, auth_1.authorizeRoles)(UserRole.SUPER_ADMIN), upload_1.uploadLogo.single('logo'), companyController_1.CompanyController.uploadLogo);
+router.put('/:companyId/color', auth_1.authenticateToken, (0, auth_1.authorizeRoles)(UserRole.SUPER_ADMIN), companyController_1.CompanyController.updateCompanyColor);
 exports.default = router;
 //# sourceMappingURL=company.js.map

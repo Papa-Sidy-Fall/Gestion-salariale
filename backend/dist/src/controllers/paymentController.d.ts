@@ -7,5 +7,6 @@ export declare class PaymentController {
     static getAllPayments(req: AuthRequest, res: Response): Promise<void>;
     static deletePayment(req: AuthRequest, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
     static getPaymentStats(req: AuthRequest, res: Response): Promise<void>;
+    static generateInvoicePDF(req: AuthRequest, res: Response): Promise<Response<any, Record<string, any>> | undefined>;
 }
 //# sourceMappingURL=paymentController.d.ts.map

@@ -8,9 +8,14 @@ export class CompanyService {
     address?: string;
     phone?: string;
     email?: string;
+    logo?: string;
+    color?: string;
   }) {
     const company = await prisma.company.create({
-      data
+      data: {
+        ...data,
+        color: data.color || "#6FA4AF" // Couleur par défaut
+      }
     });
 
     return company;
@@ -69,6 +74,8 @@ export class CompanyService {
     address?: string;
     phone?: string;
     email?: string;
+    logo?: string;
+    color?: string;
   }) {
     const company = await prisma.company.update({
       where: { id },

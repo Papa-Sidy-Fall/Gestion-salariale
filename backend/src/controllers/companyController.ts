@@ -126,4 +126,61 @@ export class CompanyController {
       res.status(500).json({ error: error.message });
     }
   }
+
+  static async uploadLogo(req: AuthRequest, res: Response) {
+    try {
+      const { companyId } = req.params;
+
+      if (!companyId) {
+        return res.status(400).json({ error: 'ID entreprise requis' });
+      }
+
+      // Vérifier que l'utilisateur a accès à cette entreprise
+      if (req.user?.role !== 'SUPER_ADMIN' && req.user?.companyId !== companyId) {
+        return res.status(403).json({ error: 'Accès non autorisé à cette entreprise' });
+      }
+
+      // Vérifier qu'un fichier a été uploadé
+      if (!req.file) {
+        return res.status(400).json({ error: 'Aucun fichier uploadé' });
+      }
+
+      // Construire l'URL du fichier
+      const logoUrl = `/uploads/logos/${req.file.filename}`;
+
+      const company = await CompanyService.updateCompany(companyId, { logo: logoUrl });
+
+      res.json({
+        message: 'Logo mis à jour avec succès',
+        company,
+        logoUrl
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  static async updateCompanyColor(req: AuthRequest, res: Response) {
+    try {
+      const { companyId } = req.params;
+      const { color } = req.body;
+
+      if (!companyId) {
+        return res.status(400).json({ error: 'ID entreprise requis' });
+      }
+
+      if (!color) {
+        return res.status(400).json({ error: 'Couleur requise' });
+      }
+
+      const company = await CompanyService.updateCompany(companyId, { color });
+
+      res.json({
+        message: 'Couleur mise à jour avec succès',
+        company
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
 }

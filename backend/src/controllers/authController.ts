@@ -15,6 +15,11 @@ enum UserRole {
 export class AuthController {
   static async register(req: AuthRequest, res: Response) {
     try {
+      console.log('=== REGISTER USER ===');
+      console.log('Headers:', req.headers.authorization);
+      console.log('Body:', req.body);
+      console.log('User:', req.user);
+
       const { email, password, role, companyId } = req.body;
 
       if (!email || !password || !role) {
@@ -37,7 +42,7 @@ export class AuthController {
       }
 
       // Vérifier les permissions : Super admin peut créer partout, Admin seulement dans son entreprise
-      if (req.user?.role !== UserRole.SUPER_ADMIN && req.user?.companyId !== companyId) {
+      if (req.user?.role === UserRole.ADMIN && req.user?.companyId !== companyId) {
         return res.status(403).json({ error: 'Accès non autorisé à cette entreprise' });
       }
 

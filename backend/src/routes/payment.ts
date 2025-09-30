@@ -23,4 +23,7 @@ router.delete('/:id', authenticateToken, authorizeRoles(UserRole.SUPER_ADMIN, Us
 // Statistiques
 router.get('/stats', authenticateToken, PaymentController.getPaymentStats);
 
+// Génération de factures PDF (accessible aux caissiers et admins)
+router.get('/:paymentId/invoice', authenticateToken, authorizeRoles(UserRole.ADMIN, UserRole.CAISSIER), PaymentController.generateInvoicePDF);
+
 export default router;

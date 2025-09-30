@@ -6,7 +6,8 @@ const prisma = new client_1.PrismaClient();
 class CompanyService {
     static async createCompany(data) {
         const company = await prisma.company.create({
-            data
+            data: Object.assign(Object.assign({}, data), { color: data.color || "#6FA4AF" // Couleur par défaut
+             })
         });
         return company;
     }

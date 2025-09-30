@@ -19,5 +19,8 @@ router.post('/register', authController_1.AuthController.register);
 router.post('/login', authController_1.AuthController.login);
 // Routes protégées
 router.get('/profile', auth_1.authenticateToken, authController_1.AuthController.getProfile);
+// Routes pour les utilisateurs (Super Admin et Admin peuvent créer des utilisateurs)
+router.get('/users', auth_1.authenticateToken, (0, auth_1.authorizeRoles)('SUPER_ADMIN', 'ADMIN'), authController_1.AuthController.getUsersByCompany);
+router.get('/users', auth_1.authenticateToken, (0, auth_1.authorizeRoles)('SUPER_ADMIN', 'ADMIN'), authController_1.AuthController.getUsersByCompany);
 exports.default = router;
 //# sourceMappingURL=auth.js.map

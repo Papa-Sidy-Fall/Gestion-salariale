@@ -14,6 +14,8 @@ const app = (0, express_1.default)();
 // Middleware
 app.use((0, cors_1.default)());
 app.use(express_1.default.json());
+// Servir les fichiers statiques (logos)
+app.use('/uploads', express_1.default.static('uploads'));
 // Routes
 app.use("/api/auth", auth_1.default);
 app.use("/api/companies", company_1.default);

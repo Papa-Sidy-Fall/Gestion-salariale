@@ -14,7 +14,7 @@ class EmployeeService {
         return employee;
     }
     static async getAllEmployees(companyId) {
-        const where = companyId ? { companyId, isActive: true } : { isActive: true };
+        const where = companyId ? { companyId } : {};
         const employees = await prisma.employee.findMany({
             where,
             include: {
@@ -60,6 +60,24 @@ class EmployeeService {
         });
         return employee;
     }
+    static async toggleEmployeeStatus(id) {
+        const employee = await prisma.employee.findUnique({
+            where: { id }
+        });
+        if (!employee) {
+            throw new Error('Employé non trouvé');
+        }
+        const updatedEmployee = await prisma.employee.update({
+            where: { id },
+            data: {
+                isActive: !employee.isActive
+            },
+            include: {
+                company: true
+            }
+        });
+        return updatedEmployee;
+    }
     static async deleteEmployee(id) {
         // Vérifier s'il y a des bulletins non payés
         const unpaidPayslips = await prisma.payslip.count({
@@ -84,8 +102,7 @@ class EmployeeService {
     static async getEmployeesByCompany(companyId) {
         const employees = await prisma.employee.findMany({
             where: {
-                companyId,
-                isActive: true
+                companyId
             },
             include: {
                 payslips: {

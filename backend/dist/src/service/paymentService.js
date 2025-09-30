@@ -113,6 +113,24 @@ class PaymentService {
         });
         return payments;
     }
+    static async getPaymentById(id) {
+        const payment = await prisma.payment.findUnique({
+            where: { id },
+            include: {
+                payslip: {
+                    include: {
+                        employee: {
+                            include: {
+                                company: true
+                            }
+                        },
+                        payRun: true
+                    }
+                }
+            }
+        });
+        return payment;
+    }
     static async deletePayment(id) {
         // Vérifier que le paiement n'est pas sur un cycle clôturé
         const payment = await prisma.payment.findUnique({

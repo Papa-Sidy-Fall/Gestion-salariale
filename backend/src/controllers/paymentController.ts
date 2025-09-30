@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { PaymentService } from '../service/paymentService';
+import { PDFService } from '../service/pdfService';
 import { AuthRequest } from '../middleware/auth';
 
 export class PaymentController {
@@ -83,6 +84,40 @@ export class PaymentController {
       res.json({ stats });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
+    }
+  }
+
+  static async generateInvoicePDF(req: AuthRequest, res: Response) {
+    try {
+      const { paymentId } = req.params;
+      if (!paymentId) {
+        return res.status(400).json({ error: 'ID paiement requis' });
+      }
+
+      // Récupérer les données du paiement avec toutes les relations nécessaires
+      const payment = await PaymentService.getPaymentById(paymentId);
+      if (!payment) {
+        return res.status(404).json({ error: 'Paiement non trouvé' });
+      }
+
+      // Générer le PDF
+      const pdfBuffer = await PDFService.generateInvoicePDF({
+        payment,
+        payslip: payment.payslip,
+        employee: payment.payslip.employee,
+        company: payment.payslip.employee.company
+      });
+
+      // Définir les headers pour le téléchargement
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=facture-${payment.id.slice(-8)}.pdf`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+
+      // Envoyer le PDF
+      res.send(pdfBuffer);
+    } catch (error: any) {
+      console.error('Erreur lors de la génération du PDF:', error);
+      res.status(500).json({ error: 'Erreur lors de la génération du PDF' });
     }
   }
 }

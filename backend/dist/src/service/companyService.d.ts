@@ -4,6 +4,8 @@ export declare class CompanyService {
         address?: string;
         phone?: string;
         email?: string;
+        logo?: string;
+        color?: string;
     }): Promise<{
         id: string;
         email: string | null;
@@ -12,6 +14,8 @@ export declare class CompanyService {
         name: string;
         address: string | null;
         phone: string | null;
+        logo: string | null;
+        color: string | null;
     }>;
     static getAllCompanies(): Promise<({
         users: {
@@ -38,6 +42,8 @@ export declare class CompanyService {
         name: string;
         address: string | null;
         phone: string | null;
+        logo: string | null;
+        color: string | null;
     })[]>;
     static getCompanyById(id: string): Promise<{
         users: {
@@ -78,12 +84,16 @@ export declare class CompanyService {
         name: string;
         address: string | null;
         phone: string | null;
+        logo: string | null;
+        color: string | null;
     }>;
     static updateCompany(id: string, data: {
         name?: string;
         address?: string;
         phone?: string;
         email?: string;
+        logo?: string;
+        color?: string;
     }): Promise<{
         id: string;
         email: string | null;
@@ -92,6 +102,8 @@ export declare class CompanyService {
         name: string;
         address: string | null;
         phone: string | null;
+        logo: string | null;
+        color: string | null;
     }>;
     static deleteCompany(id: string): Promise<{
         message: string;

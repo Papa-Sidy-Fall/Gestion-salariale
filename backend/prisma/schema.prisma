@@ -61,6 +61,8 @@ model Company {
   address   String?
   phone     String?
   email     String?
+  logo      String?   // URL ou chemin vers le logo
+  color     String?   @default("#6FA4AF") // Couleur principale de l'entreprise
   users     User[]
   employees Employee[]
   payRuns   PayRun[]

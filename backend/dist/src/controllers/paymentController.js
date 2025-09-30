@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.PaymentController = void 0;
 const paymentService_1 = require("../service/paymentService");
+const pdfService_1 = require("../service/pdfService");
 class PaymentController {
     static async createPayment(req, res) {
         try {
@@ -75,6 +76,36 @@ class PaymentController {
         }
         catch (error) {
             res.status(500).json({ error: error.message });
+        }
+    }
+    static async generateInvoicePDF(req, res) {
+        try {
+            const { paymentId } = req.params;
+            if (!paymentId) {
+                return res.status(400).json({ error: 'ID paiement requis' });
+            }
+            // Récupérer les données du paiement avec toutes les relations nécessaires
+            const payment = await paymentService_1.PaymentService.getPaymentById(paymentId);
+            if (!payment) {
+                return res.status(404).json({ error: 'Paiement non trouvé' });
+            }
+            // Générer le PDF
+            const pdfBuffer = await pdfService_1.PDFService.generateInvoicePDF({
+                payment,
+                payslip: payment.payslip,
+                employee: payment.payslip.employee,
+                company: payment.payslip.employee.company
+            });
+            // Définir les headers pour le téléchargement
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename=facture-${payment.id.slice(-8)}.pdf`);
+            res.setHeader('Content-Length', pdfBuffer.length);
+            // Envoyer le PDF
+            res.send(pdfBuffer);
+        }
+        catch (error) {
+            console.error('Erreur lors de la génération du PDF:', error);
+            res.status(500).json({ error: 'Erreur lors de la génération du PDF' });
         }
     }
 }

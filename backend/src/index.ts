@@ -12,6 +12,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Servir les fichiers statiques (logos)
+app.use('/uploads', express.static('uploads'));
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/companies", companyRoutes);

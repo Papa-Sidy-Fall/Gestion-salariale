@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Users, DollarSign, Clock, Check } from 'lucide-react';
+import { Users, DollarSign, CheckCircle, Clock, Plus, FileText, CreditCard, BarChart3, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
@@ -145,6 +145,18 @@ const Dashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
+              {/* Logo de l'entreprise si disponible */}
+              {(selectedCompany?.logo || user?.company?.logo) && (
+                <img
+                  src={selectedCompany?.logo || user?.company?.logo}
+                  alt="Logo entreprise"
+                  className="h-10 w-10 mr-4 rounded-lg object-cover"
+                  style={{
+                    filter: `hue-rotate(${(selectedCompany?.color || user?.company?.color) ? '0deg' : '0deg'})`,
+                    backgroundColor: selectedCompany?.color || user?.company?.color || '#6FA4AF'
+                  }}
+                />
+              )}
               <h1 className="text-2xl font-bold text-gray-900">
                 {user?.role === 'SUPER_ADMIN' ? 'Gestion des Entreprises' :
                  user?.role === 'ADMIN' ? 'Tableau de bord' :

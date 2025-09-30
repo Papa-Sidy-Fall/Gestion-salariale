@@ -5,6 +5,8 @@ import { AuthRequest } from '../middleware/auth';
 export class EmployeeController {
   static async createEmployee(req: AuthRequest, res: Response) {
     try {
+      console.log('=== CREATE EMPLOYEE ===');
+      console.log('Headers:', req.headers.authorization);
       console.log('Données reçues:', req.body);
       console.log('Utilisateur:', req.user);
 

@@ -11,6 +11,8 @@ export declare class PayRunService {
             name: string;
             address: string | null;
             phone: string | null;
+            logo: string | null;
+            color: string | null;
         };
     } & {
         id: string;
@@ -29,6 +31,8 @@ export declare class PayRunService {
             name: string;
             address: string | null;
             phone: string | null;
+            logo: string | null;
+            color: string | null;
         };
         payslips: ({
             employee: {
@@ -75,6 +79,8 @@ export declare class PayRunService {
             name: string;
             address: string | null;
             phone: string | null;
+            logo: string | null;
+            color: string | null;
         };
         payslips: ({
             employee: {
@@ -123,6 +129,8 @@ export declare class PayRunService {
             name: string;
             address: string | null;
             phone: string | null;
+            logo: string | null;
+            color: string | null;
         };
     } & {
         id: string;
@@ -169,6 +177,8 @@ export declare class PayRunService {
             name: string;
             address: string | null;
             phone: string | null;
+            logo: string | null;
+            color: string | null;
         };
         payslips: ({
             employee: {
@@ -212,6 +222,8 @@ export declare class PayRunService {
             name: string;
             address: string | null;
             phone: string | null;
+            logo: string | null;
+            color: string | null;
         };
     } & {
         id: string;

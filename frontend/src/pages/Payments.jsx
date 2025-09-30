@@ -172,6 +172,27 @@ const Payments = () => {
     }
   };
 
+  const generateInvoicePDF = async (paymentId) => {
+    try {
+      const response = await axios.get(`http://localhost:3000/api/payments/${paymentId}/invoice`, {
+        responseType: 'blob' // Important pour recevoir le PDF en blob
+      });
+
+      // Créer un URL pour le blob
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `facture-${paymentId.slice(-8)}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Erreur lors du téléchargement du PDF:', error);
+      alert('Erreur lors du téléchargement de la facture');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -283,8 +304,17 @@ const Payments = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="text-sm font-medium text-gray-900">
-                        {payment.amount.toLocaleString()} FCFA
+                      <div className="flex items-center space-x-3">
+                        <div className="text-sm font-medium text-gray-900">
+                          {payment.amount.toLocaleString()} FCFA
+                        </div>
+                        <button
+                          onClick={() => generateInvoicePDF(payment.id)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm font-medium"
+                          title="Télécharger la facture PDF"
+                        >
+                          📄 Facture
+                        </button>
                       </div>
                     </div>
                   </li>

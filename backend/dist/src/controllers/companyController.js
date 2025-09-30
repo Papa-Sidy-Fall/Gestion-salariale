@@ -121,6 +121,54 @@ class CompanyController {
             res.status(500).json({ error: error.message });
         }
     }
+    static async uploadLogo(req, res) {
+        var _a, _b;
+        try {
+            const { companyId } = req.params;
+            if (!companyId) {
+                return res.status(400).json({ error: 'ID entreprise requis' });
+            }
+            // Vérifier que l'utilisateur a accès à cette entreprise
+            if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== 'SUPER_ADMIN' && ((_b = req.user) === null || _b === void 0 ? void 0 : _b.companyId) !== companyId) {
+                return res.status(403).json({ error: 'Accès non autorisé à cette entreprise' });
+            }
+            // Vérifier qu'un fichier a été uploadé
+            if (!req.file) {
+                return res.status(400).json({ error: 'Aucun fichier uploadé' });
+            }
+            // Construire l'URL du fichier
+            const logoUrl = `/uploads/logos/${req.file.filename}`;
+            const company = await companyService_1.CompanyService.updateCompany(companyId, { logo: logoUrl });
+            res.json({
+                message: 'Logo mis à jour avec succès',
+                company,
+                logoUrl
+            });
+        }
+        catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+    static async updateCompanyColor(req, res) {
+        try {
+            const { companyId } = req.params;
+            const { color } = req.body;
+            if (!companyId) {
+                return res.status(400).json({ error: 'ID entreprise requis' });
+            }
+            if (!color) {
+                return res.status(400).json({ error: 'Couleur requise' });
+            }
+            const company = await companyService_1.CompanyService.updateCompany(companyId, { color });
+            res.json({
+                message: 'Couleur mise à jour avec succès',
+                company
+            });
+        }
+        catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    }
 }
 exports.CompanyController = CompanyController;
 //# sourceMappingURL=companyController.js.map
