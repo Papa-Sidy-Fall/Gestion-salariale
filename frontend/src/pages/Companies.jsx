@@ -604,7 +604,7 @@ const Companies = () => {
 
       {/* Modal création entreprise */}
       {showModal && (
-        <div className="fixed inset-0 bg-[#6FA4AF] bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0  bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl transform transition-all max-h-[90vh] overflow-hidden">
             {/* Header avec fond uni */}
             <div className="bg-blue-600 px-6 py-4 rounded-t-2xl">
@@ -733,12 +733,12 @@ const Companies = () => {
                   <>
                     {/* Section Admin avec style spécial */}
                     <div className="border-t-2 border-blue-200 pt-6 mt-8">
-                      <div className="bg-[#6FA4AF] rounded-xl p-4 mb-6">
-                        <h4 className="text-lg font-bold text-gray-800 mb-2 flex items-center">
+                      <div className="bg-blue-600 rounded-xl p-4 mb-6">
+                        <h4 className="text-lg font-bold text-white mb-2 flex items-center">
                           <User className="h-5 w-5 mr-2" />
                           Créer le compte Administrateur
                         </h4>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-white">
                           Cet utilisateur aura tous les droits sur l'entreprise
                         </p>
                       </div>
@@ -836,7 +836,7 @@ const Companies = () => {
 
       {/* Modal création utilisateur */}
       {showUserModal && selectedCompany && (
-        <div className="fixed inset-0 bg-[#6FA4AF] bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl transform transition-all max-h-[90vh] overflow-hidden">
             {/* Header avec fond uni */}
             <div className="bg-blue-600 px-6 py-4 rounded-t-2xl">
@@ -852,7 +852,7 @@ const Companies = () => {
             <div className="px-6 py-4 max-h-[calc(90vh-120px)] overflow-y-auto">
               <form onSubmit={handleCreateUser} className="space-y-4">
                 {/* Section principale */}
-                <div className="bg-[#6FA4AF] rounded-xl p-4">
+                <div className="rounded-xl p-4">
                   <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                     <User className="h-5 w-5 mr-2" />
                     Informations du compte
