@@ -155,6 +155,10 @@ const Dashboard = () => {
                     filter: `hue-rotate(${(selectedCompany?.color || user?.company?.color) ? '0deg' : '0deg'})`,
                     backgroundColor: selectedCompany?.color || user?.company?.color || '#6FA4AF'
                   }}
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    console.warn('Erreur de chargement du logo:', e.target.src);
+                  }}
                 />
               )}
               <h1 className="text-2xl font-bold text-gray-900">

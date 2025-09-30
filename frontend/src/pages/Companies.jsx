@@ -1000,7 +1000,7 @@ const Companies = () => {
 
       {/* Modal création employé */}
       {showEmployeeModal && selectedCompany && (
-        <div className="fixed inset-0 bg-[#6FA4AF] bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl transform transition-all max-h-[90vh] overflow-hidden">
             {/* Header avec fond uni */}
             <div className="bg-blue-600 px-6 py-4 rounded-t-2xl">
@@ -1016,7 +1016,7 @@ const Companies = () => {
             <div className="px-6 py-4 max-h-[calc(90vh-120px)] overflow-y-auto">
               <form onSubmit={handleCreateEmployee} className="space-y-4">
                 {/* Informations personnelles */}
-                <div className="bg-[#6FA4AF] rounded-xl p-4">
+                <div className="rounded-xl p-4">
                   <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                     <User className="h-5 w-5 mr-2" />
                     Informations personnelles
@@ -1056,7 +1056,7 @@ const Companies = () => {
                 </div>
 
                 {/* Informations professionnelles */}
-                <div className="bg-[#6FA4AF] rounded-xl p-4">
+                <div className="rounded-xl p-4">
                   <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                     <Briefcase className="h-5 w-5 mr-2" />
                     Informations professionnelles
@@ -1123,7 +1123,7 @@ const Companies = () => {
                 </div>
 
                 {/* Informations bancaires */}
-                <div className="bg-[#6FA4AF] rounded-xl p-4">
+                <div className="rounded-xl p-4">
                   <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                     <CreditCard className="h-5 w-5 mr-2" />
                     Coordonnées bancaires

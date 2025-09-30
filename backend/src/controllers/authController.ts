@@ -15,10 +15,6 @@ enum UserRole {
 export class AuthController {
   static async register(req: AuthRequest, res: Response) {
     try {
-      console.log('=== REGISTER USER ===');
-      console.log('Headers:', req.headers.authorization);
-      console.log('Body:', req.body);
-      console.log('User:', req.user);
 
       const { email, password, role, companyId } = req.body;
 
