@@ -136,8 +136,8 @@ class CompanyController {
             if (!req.file) {
                 return res.status(400).json({ error: 'Aucun fichier uploadé' });
             }
-            // Construire l'URL du fichier
-            const logoUrl = `/uploads/logos/${req.file.filename}`;
+            // Construire l'URL complète du fichier
+            const logoUrl = `http://localhost:3000/uploads/logos/${req.file.filename}`;
             const company = await companyService_1.CompanyService.updateCompany(companyId, { logo: logoUrl });
             res.json({
                 message: 'Logo mis à jour avec succès',

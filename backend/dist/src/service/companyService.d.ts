@@ -65,6 +65,8 @@ export declare class CompanyService {
             position: string;
             contractType: import(".prisma/client").$Enums.ContractType;
             rate: number;
+            dailyRate: number | null;
+            hourlyRate: number | null;
             bankDetails: string | null;
             isActive: boolean;
         }[];

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
-import { Calendar, Clock, Users, CheckCircle, XCircle, Coffee, AlertCircle, Plus, Filter } from 'lucide-react';
+import { Calendar, Clock, Users, CheckCircle, XCircle, Coffee, AlertCircle, Plus, Filter, Calculator } from 'lucide-react';
 
 const Attendances = () => {
   const { user } = useAuth();
@@ -10,6 +10,7 @@ const Attendances = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [showCheckInModal, setShowCheckInModal] = useState(false);
+  const [showManualEntryModal, setShowManualEntryModal] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [stats, setStats] = useState(null);
   const [filters, setFilters] = useState({
@@ -26,6 +27,13 @@ const Attendances = () => {
     status: 'PRESENT',
     notes: ''
   });
+  const [manualEntryData, setManualEntryData] = useState({
+    employeeId: '',
+    date: new Date().toISOString().split('T')[0],
+    checkIn: '',
+    checkOut: '',
+    notes: ''
+  });
 
   useEffect(() => {
     fetchEmployees();
@@ -36,7 +44,9 @@ const Attendances = () => {
   const fetchEmployees = async () => {
     try {
       const companyId = user?.role === 'SUPER_ADMIN' ? '' : user?.companyId;
-      const response = await axios.get(`http://localhost:3000/api/employees${companyId ? `?companyId=${companyId}` : ''}`);
+      const response = await axios.get(`http://localhost:3000/api/employees${companyId ? `?companyId=${companyId}` : ''}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       setEmployees(response.data.employees.filter(e => e.isActive && (e.contractType === 'JOURNALIER' || e.contractType === 'HONORAIRE')));
     } catch (error) {
       console.error('Erreur lors du chargement des employés:', error);
@@ -47,14 +57,16 @@ const Attendances = () => {
     try {
       const companyId = user?.role === 'SUPER_ADMIN' ? '' : user?.companyId;
       const params = new URLSearchParams();
-      
+
       if (companyId) params.append('companyId', companyId);
       if (filters.employeeId) params.append('employeeId', filters.employeeId);
       if (filters.startDate) params.append('startDate', filters.startDate);
       if (filters.endDate) params.append('endDate', filters.endDate);
       if (filters.status) params.append('status', filters.status);
 
-      const response = await axios.get(`http://localhost:3000/api/attendances?${params.toString()}`);
+      const response = await axios.get(`http://localhost:3000/api/attendances?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       setAttendances(response.data.attendances);
     } catch (error) {
       console.error('Erreur lors du chargement des pointages:', error);
@@ -67,11 +79,13 @@ const Attendances = () => {
     try {
       const companyId = user?.role === 'SUPER_ADMIN' ? '' : user?.companyId;
       const params = new URLSearchParams();
-      
+
       if (companyId) params.append('companyId', companyId);
       if (filters.employeeId) params.append('employeeId', filters.employeeId);
 
-      const response = await axios.get(`http://localhost:3000/api/attendances/stats?${params.toString()}`);
+      const response = await axios.get(`http://localhost:3000/api/attendances/stats?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      });
       setStats(response.data.stats);
     } catch (error) {
       console.error('Erreur lors du chargement des statistiques:', error);
@@ -84,7 +98,7 @@ const Attendances = () => {
         employeeId,
         date: new Date().toISOString()
       });
-      
+
       fetchAttendances();
       fetchStats();
       setShowCheckInModal(false);
@@ -101,7 +115,7 @@ const Attendances = () => {
         employeeId,
         date: new Date().toISOString()
       });
-      
+
       fetchAttendances();
       fetchStats();
       alert('Départ pointé avec succès!');
@@ -135,6 +149,30 @@ const Attendances = () => {
     }
   };
 
+  const handleManualEntry = async (e) => {
+    e.preventDefault();
+
+    try {
+      const data = {
+        ...manualEntryData,
+        checkIn: new Date(`${manualEntryData.date}T${manualEntryData.checkIn}`).toISOString(),
+        checkOut: new Date(`${manualEntryData.date}T${manualEntryData.checkOut}`).toISOString(),
+        date: new Date(manualEntryData.date).toISOString()
+      };
+
+      await axios.post('http://localhost:3000/api/attendances/manual-entry', data);
+
+      fetchAttendances();
+      fetchStats();
+      setShowManualEntryModal(false);
+      resetManualEntryForm();
+      alert('Heures saisies avec succès!');
+    } catch (error) {
+      console.error('Erreur lors de la saisie manuelle:', error);
+      alert('Erreur: ' + (error.response?.data?.error || error.message));
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       employeeId: '',
@@ -144,6 +182,27 @@ const Attendances = () => {
       status: 'PRESENT',
       notes: ''
     });
+  };
+
+  const resetManualEntryForm = () => {
+    setManualEntryData({
+      employeeId: '',
+      date: new Date().toISOString().split('T')[0],
+      checkIn: '',
+      checkOut: '',
+      notes: ''
+    });
+  };
+
+  const calculateHours = (checkIn, checkOut) => {
+    if (!checkIn || !checkOut) return 0;
+    const diffMs = new Date(`2000-01-01T${checkOut}`) - new Date(`2000-01-01T${checkIn}`);
+    return (diffMs / (1000 * 60 * 60)).toFixed(1);
+  };
+
+  const calculateAmount = (hours, hourlyRate) => {
+    if (!hours || !hourlyRate) return 0;
+    return (parseFloat(hours) * hourlyRate).toFixed(0);
   };
 
   const getStatusIcon = (status) => {
@@ -185,6 +244,9 @@ const Attendances = () => {
     return new Date(dateString).toLocaleDateString('fr-FR');
   };
 
+  const honoraireEmployees = employees.filter(emp => emp.contractType === 'HONORAIRE');
+  const canAccessManualEntry = user?.role === 'SUPER_ADMIN' || user?.role === 'CAISSIER';
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -213,6 +275,15 @@ const Attendances = () => {
                 <Clock className="h-4 w-4 mr-2" />
                 Pointage Rapide
               </button>
+              {canAccessManualEntry && honoraireEmployees.length > 0 && (
+                <button
+                  onClick={() => setShowManualEntryModal(true)}
+                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center"
+                >
+                  <Calculator className="h-4 w-4 mr-2" />
+                  Saisie Manuelle
+                </button>
+              )}
               <button
                 onClick={() => setShowModal(true)}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center"
@@ -228,81 +299,12 @@ const Attendances = () => {
       {/* Main content */}
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
-          {/* Statistiques */}
-          {stats && (
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <div className="bg-white p-4 rounded-lg shadow">
-                <div className="flex items-center">
-                  <Calendar className="h-8 w-8 text-blue-500 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-600">Total Jours</p>
-                    <p className="text-2xl font-bold">{stats.totalDays}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white p-4 rounded-lg shadow">
-                <div className="flex items-center">
-                  <CheckCircle className="h-8 w-8 text-green-500 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-600">Jours Présents</p>
-                    <p className="text-2xl font-bold">{stats.presentDays}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white p-4 rounded-lg shadow">
-                <div className="flex items-center">
-                  <Clock className="h-8 w-8 text-purple-500 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-600">Heures Totales</p>
-                    <p className="text-2xl font-bold">{stats.totalHours.toFixed(1)}h</p>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-white p-4 rounded-lg shadow">
-                <div className="flex items-center">
-                  <Users className="h-8 w-8 text-indigo-500 mr-3" />
-                  <div>
-                    <p className="text-sm text-gray-600">Taux Présence</p>
-                    <p className="text-2xl font-bold">{stats.attendanceRate.toFixed(1)}%</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Filtres */}
           <div className="bg-white p-4 rounded-lg shadow mb-6">
-            <div className="flex items-center mb-3">
-              <Filter className="h-5 w-5 text-gray-600 mr-2" />
-              <h3 className="text-lg font-medium text-gray-900">Filtres</h3>
-            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Filtres</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Employé</label>
-                <select
-                  className="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                  value={filters.employeeId}
-                  onChange={(e) => setFilters({...filters, employeeId: e.target.value})}
-                >
-                  <option value="">Tous les employés</option>
-                  {employees.map(emp => (
-                    <option key={emp.id} value={emp.id}>
-                      {emp.firstName} {emp.lastName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date début</label>
-                <input
-                  type="date"
-                  className="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                  value={filters.startDate}
-                  onChange={(e) => setFilters({...filters, startDate: e.target.value})}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date fin</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date de fin</label>
                 <input
                   type="date"
                   className="w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
@@ -326,6 +328,21 @@ const Attendances = () => {
               </div>
             </div>
           </div>
+
+          {/* Statistiques */}
+          {stats && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <div className="bg-white p-4 rounded-lg shadow">
+                <div className="flex items-center">
+                  <Calendar className="h-8 w-8 text-blue-500 mr-3" />
+                  <div>
+                    <p className="text-sm text-gray-600">Total Jours</p>
+                    <p className="text-2xl font-bold">{stats.totalDays}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Liste des pointages */}
           <div className="bg-white shadow overflow-hidden sm:rounded-md">

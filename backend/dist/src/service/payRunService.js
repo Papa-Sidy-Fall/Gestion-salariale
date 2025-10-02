@@ -127,14 +127,59 @@ class PayRunService {
             }
         });
         const payslips = [];
+        // Calculer les dates de début et fin de la période
+        const periodParts = payRun.period.split('-');
+        if (periodParts.length !== 2) {
+            throw new Error('Format de période invalide');
+        }
+        const yearStr = periodParts[0];
+        const monthStr = periodParts[1];
+        if (!yearStr || !monthStr) {
+            throw new Error('Format de période invalide');
+        }
+        const year = parseInt(yearStr, 10);
+        const month = parseInt(monthStr, 10);
+        if (isNaN(year) || isNaN(month)) {
+            throw new Error('Format de période invalide');
+        }
+        const startDate = new Date(year, month - 1, 1);
+        const endDate = new Date(year, month, 0);
         for (const employee of employees) {
-            // Calculer le salaire brut (pour simplifier, on utilise le taux fixe)
-            // Dans un vrai système, il faudrait calculer selon le type de contrat
-            let grossSalary = employee.rate;
-            // Pour les journaliers, on pourrait demander le nombre de jours
-            if (employee.contractType === 'JOURNALIER') {
-                // Par défaut, on considère 30 jours travaillés
-                grossSalary = employee.rate * 30;
+            let grossSalary = 0;
+            // Calculer le salaire selon le type de contrat
+            if (employee.contractType === 'FIXE') {
+                // Salaire fixe mensuel
+                grossSalary = employee.rate;
+            }
+            else if (employee.contractType === 'JOURNALIER') {
+                // Calculer basé sur les jours travaillés
+                const attendances = await prisma.attendance.findMany({
+                    where: {
+                        employeeId: employee.id,
+                        date: {
+                            gte: startDate,
+                            lte: endDate,
+                        },
+                        status: client_1.AttendanceStatus.PRESENT,
+                    },
+                });
+                const daysWorked = attendances.length;
+                grossSalary = daysWorked * (employee.dailyRate || 0);
+            }
+            else if (employee.contractType === 'HONORAIRE') {
+                // Calculer basé sur les heures travaillées
+                const attendances = await prisma.attendance.findMany({
+                    where: {
+                        employeeId: employee.id,
+                        date: {
+                            gte: startDate,
+                            lte: endDate,
+                        },
+                        status: client_1.AttendanceStatus.PRESENT,
+                    },
+                });
+                const totalHours = attendances.reduce((sum, a) => sum + (a.hoursWorked || 0), 0);
+                grossSalary = totalHours * (employee.hourlyRate || 0);
             }
             // Calculer les déductions (simplifié - 5% pour l'exemple)
             const deductions = grossSalary * 0.05;

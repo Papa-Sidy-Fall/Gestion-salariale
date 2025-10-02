@@ -43,17 +43,17 @@ const UserManagement = ({ companyId }) => {
 
     // Validation avec regex pour la création d'utilisateur
     if (!validateEmail(formData.email)) {
-      alert('Veuillez saisir une adresse email valide');
+      showNotification('Veuillez saisir une adresse email valide', 'error');
       return;
     }
 
     if (!validatePassword(formData.password)) {
-      alert('Le mot de passe doit contenir au moins 6 caractères avec au moins une lettre et un chiffre');
+      showNotification('Le mot de passe doit contenir au moins 6 caractères avec au moins une lettre et un chiffre', 'error');
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      alert('Les mots de passe ne correspondent pas');
+      showNotification('Les mots de passe ne correspondent pas', 'error');
       return;
     }
 
@@ -73,10 +73,10 @@ const UserManagement = ({ companyId }) => {
         confirmPassword: '',
         role: 'CAISSIER'
       });
-      alert('Utilisateur créé avec succès');
+      showNotification('Utilisateur créé avec succès');
     } catch (error) {
       console.error('Erreur lors de la création:', error);
-      alert('Erreur: ' + (error.response?.data?.error || error.message));
+      showNotification('Erreur: ' + (error.response?.data?.error || error.message), 'error');
     }
   };
 
@@ -253,6 +253,8 @@ const Employees = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [activeTab, setActiveTab] = useState('employees');
+  const [todayAttendances, setTodayAttendances] = useState({});
+  const [notification, setNotification] = useState(null);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -273,10 +275,48 @@ const Employees = () => {
     try {
       const response = await axios.get('http://localhost:3000/api/employees');
       setEmployees(response.data.employees);
+      // Fetch today's attendance for each employee
+      const attendances = {};
+      for (const employee of response.data.employees) {
+        try {
+          const attendanceRes = await axios.get(`http://localhost:3000/api/attendances/today?employeeId=${employee.id}`);
+          attendances[employee.id] = attendanceRes.data;
+        } catch (error) {
+          // No attendance for today
+          attendances[employee.id] = null;
+        }
+      }
+      setTodayAttendances(attendances);
     } catch (error) {
       console.error('Erreur lors du chargement des employés:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleClockIn = async (employeeId) => {
+    try {
+      await axios.post('http://localhost:3000/api/attendances/check-in', { employeeId });
+      // Refresh attendance for this employee
+      const attendanceRes = await axios.get(`http://localhost:3000/api/attendances/today?employeeId=${employeeId}`);
+      setTodayAttendances(prev => ({ ...prev, [employeeId]: attendanceRes.data }));
+      showNotification('Pointage arrivée effectué avec succès');
+    } catch (error) {
+      console.error('Erreur lors du pointage arrivée:', error);
+      showNotification('Erreur: ' + (error.response?.data?.error || error.message), 'error');
+    }
+  };
+
+  const handleClockOut = async (employeeId) => {
+    try {
+      await axios.post('http://localhost:3000/api/attendances/check-out', { employeeId });
+      // Refresh attendance for this employee
+      const attendanceRes = await axios.get(`http://localhost:3000/api/attendances/today?employeeId=${employeeId}`);
+      setTodayAttendances(prev => ({ ...prev, [employeeId]: attendanceRes.data }));
+      showNotification('Pointage départ effectué avec succès');
+    } catch (error) {
+      console.error('Erreur lors du pointage départ:', error);
+      showNotification('Erreur: ' + (error.response?.data?.error || error.message), 'error');
     }
   };
 
@@ -316,33 +356,33 @@ const Employees = () => {
 
     // Validation du formulaire employé
     if (!validateName(formData.firstName)) {
-      alert('Le prénom doit contenir au moins 2 caractères (lettres, espaces, apostrophes, tirets autorisés)');
+      showNotification('Le prénom doit contenir au moins 2 caractères (lettres, espaces, apostrophes, tirets autorisés)', 'error');
       return;
     }
 
     if (!validateName(formData.lastName)) {
-      alert('Le nom doit contenir au moins 2 caractères (lettres, espaces, apostrophes, tirets autorisés)');
+      showNotification('Le nom doit contenir au moins 2 caractères (lettres, espaces, apostrophes, tirets autorisés)', 'error');
       return;
     }
 
     if (!validatePosition(formData.position)) {
-      alert('Le poste doit contenir au moins 2 caractères');
+      showNotification('Le poste doit contenir au moins 2 caractères', 'error');
       return;
     }
 
     // Validation selon le type de contrat
     if (formData.contractType === 'FIXE' && !validateAmount(formData.rate)) {
-      alert('Le salaire mensuel doit être un nombre positif valide');
+      showNotification('Le salaire mensuel doit être un nombre positif valide', 'error');
       return;
     }
 
     if (formData.contractType === 'JOURNALIER' && !validateAmount(formData.dailyRate)) {
-      alert('Le taux journalier doit être un nombre positif valide');
+      showNotification('Le taux journalier doit être un nombre positif valide', 'error');
       return;
     }
 
     if (formData.contractType === 'HONORAIRE' && !validateAmount(formData.hourlyRate)) {
-      alert('Le taux horaire doit être un nombre positif valide');
+      showNotification('Le taux horaire doit être un nombre positif valide', 'error');
       return;
     }
 
@@ -386,7 +426,7 @@ const Employees = () => {
       resetForm();
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error.response?.data || error.message);
-      alert('Erreur lors de la sauvegarde: ' + (error.response?.data?.error || error.message));
+      showNotification('Erreur lors de la sauvegarde: ' + (error.response?.data?.error || error.message), 'error');
     }
   };
   const handleEdit = (employee) => {
@@ -436,6 +476,11 @@ const Employees = () => {
     setShowModal(true);
   };
 
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 5000); // Disparaît après 5 secondes
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -458,6 +503,26 @@ const Employees = () => {
           </div>
         </div>
       </div>
+
+      {/* Notification */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-md shadow-lg ${
+          notification.type === 'error' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
+        }`}>
+          <div className="flex items-center">
+            <span className="mr-2">
+              {notification.type === 'error' ? '❌' : '✅'}
+            </span>
+            <span>{notification.message}</span>
+            <button
+              onClick={() => setNotification(null)}
+              className="ml-4 text-white hover:text-gray-200"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="bg-white shadow">
@@ -540,6 +605,36 @@ const Employees = () => {
                           }`}>
                             {employee.isActive ? 'Actif' : 'Inactif'}
                           </span>
+
+                          {/* Clock buttons - Seulement pour ADMIN et SUPER_ADMIN, pas pour CAISSIER */}
+                          {employee.isActive && (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+                            <div className="flex items-center space-x-1">
+                              {todayAttendances[employee.id]?.checkIn ? (
+                                todayAttendances[employee.id]?.checkOut ? (
+                                  <span className="text-green-600 text-xs font-medium px-2 py-1 bg-green-100 rounded">
+                                    Pointage complet ({todayAttendances[employee.id]?.hoursWorked?.toFixed(1)}h)
+                                  </span>
+                                ) : (
+                                  <button
+                                    onClick={() => handleClockOut(employee.id)}
+                                    className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-xs font-medium"
+                                    title="Pointer le départ"
+                                  >
+                                    Départ
+                                  </button>
+                                )
+                              ) : (
+                                <button
+                                  onClick={() => handleClockIn(employee.id)}
+                                  className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-xs font-medium"
+                                  title="Pointer l'arrivée"
+                                >
+                                  Arrivée
+                                </button>
+                              )}
+                            </div>
+                          )}
+
                           <button
                             onClick={() => handleEdit(employee)}
                             className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"

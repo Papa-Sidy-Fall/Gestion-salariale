@@ -254,4 +254,55 @@ export class AttendanceController {
       res.status(500).json({ error: error.message });
     }
   }
+
+  // Obtenir le pointage du jour pour un employé
+  static async getTodayAttendance(req: AuthRequest, res: Response) {
+    try {
+      const { employeeId } = req.query;
+
+      if (!employeeId) {
+        return res.status(400).json({ error: 'ID employé requis' });
+      }
+
+      const attendance = await AttendanceService.getTodayAttendance(employeeId as string);
+
+      res.json(attendance);
+    } catch (error: any) {
+      if (error.message === 'Pointage non trouvé') {
+        return res.status(404).json({ error: error.message });
+      }
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  // Saisie manuelle des heures par le caissier (pour employés HONORAIRE)
+  static async manualTimeEntry(req: AuthRequest, res: Response) {
+    try {
+      const { employeeId, date, checkIn, checkOut, notes } = req.body;
+
+      if (!employeeId || !date || !checkIn || !checkOut) {
+        return res.status(400).json({ error: 'ID employé, date, heure d\'arrivée et heure de départ requis' });
+      }
+
+      // Vérifier que l'utilisateur a accès à cette entreprise
+      if (req.user?.role !== 'SUPER_ADMIN' && req.user?.role !== 'CAISSIER') {
+        return res.status(403).json({ error: 'Accès non autorisé' });
+      }
+
+      const attendance = await AttendanceService.manualTimeEntry({
+        employeeId,
+        date: new Date(date),
+        checkIn: new Date(checkIn),
+        checkOut: new Date(checkOut),
+        notes,
+      });
+
+      res.status(201).json({
+        message: 'Heures saisies avec succès',
+        attendance,
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
 }

@@ -10,6 +10,7 @@ const company_1 = __importDefault(require("./routes/company"));
 const employee_1 = __importDefault(require("./routes/employee"));
 const payRun_1 = __importDefault(require("./routes/payRun"));
 const payment_1 = __importDefault(require("./routes/payment"));
+const attendance_1 = __importDefault(require("./routes/attendance"));
 const app = (0, express_1.default)();
 // Middleware
 app.use((0, cors_1.default)());
@@ -22,6 +23,7 @@ app.use("/api/companies", company_1.default);
 app.use("/api/employees", employee_1.default);
 app.use("/api/payruns", payRun_1.default);
 app.use("/api/payments", payment_1.default);
+app.use("/api/attendances", attendance_1.default);
 app.get("/", (req, res) => {
     res.send("🚀 Serveur Express + TypeScript prêt !");
 });

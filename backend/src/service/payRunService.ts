@@ -102,19 +102,77 @@ export class PayRunService {
   }
 
   static async deletePayRun(id: string) {
-    // Vérifier qu'il n'y a pas de bulletins approuvés
-    const approvedPayslips = await prisma.payslip.count({
-      where: {
-        payRunId: id,
-        status: { in: ['PAYE', 'PARTIEL'] }
+    const payRun = await prisma.payRun.findUnique({
+      where: { id },
+      include: {
+        payslips: true,
+        company: true
       }
     });
 
-    if (approvedPayslips > 0) {
-      throw new Error('Impossible de supprimer un cycle avec des bulletins payés');
+    if (!payRun) {
+      throw new Error('Cycle de paie non trouvé');
     }
 
-    // Supprimer d'abord les bulletins
+    // Vérifier qu'il n'y a pas de bulletins approuvés pour les cycles non clôturés
+    if (payRun.status !== 'CLOTURE') {
+      const approvedPayslips = await prisma.payslip.count({
+        where: {
+          payRunId: id,
+          status: { in: ['PAYE', 'PARTIEL'] }
+        }
+      });
+
+      if (approvedPayslips > 0) {
+        throw new Error('Impossible de supprimer un cycle avec des bulletins payés');
+      }
+    }
+
+    // Pour les cycles clôturés, vérifier qu'il n'y a pas de paiements récents (derniers 30 jours)
+    if (payRun.status === 'CLOTURE') {
+      const recentPayments = await prisma.payment.count({
+        where: {
+          payslip: {
+            payRunId: id
+          },
+          date: {
+            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // 30 jours
+          }
+        }
+      });
+
+      if (recentPayments > 0) {
+        throw new Error('Impossible de supprimer un cycle clôturé avec des paiements récents (moins de 30 jours)');
+      }
+    }
+
+    // Calculer le montant total des bulletins pour rembourser le budget si nécessaire
+    const totalPaid = payRun.payslips.reduce((sum, payslip) => {
+      if (payslip.status === 'PAYE') {
+        return sum + payslip.net;
+      }
+      return sum;
+    }, 0);
+
+    // Si le cycle était approuvé ou clôturé, rembourser le budget
+    if ((payRun.status === 'APPROUVE' || payRun.status === 'CLOTURE') && totalPaid > 0) {
+      const newBudget = payRun.company.budget + totalPaid;
+      await prisma.company.update({
+        where: { id: payRun.company.id },
+        data: { budget: newBudget }
+      });
+    }
+
+    // Supprimer d'abord les paiements liés aux bulletins
+    await prisma.payment.deleteMany({
+      where: {
+        payslip: {
+          payRunId: id
+        }
+      }
+    });
+
+    // Supprimer les bulletins
     await prisma.payslip.deleteMany({
       where: { payRunId: id }
     });
@@ -244,7 +302,8 @@ export class PayRunService {
     const payRun = await prisma.payRun.findUnique({
       where: { id },
       include: {
-        payslips: true
+        payslips: true,
+        company: true
       }
     });
 
@@ -260,6 +319,22 @@ export class PayRunService {
     if (payRun.payslips.length === 0) {
       throw new Error('Aucun bulletin généré pour ce cycle');
     }
+
+    // Calculer le total des salaires pour ce cycle
+    const totalSalary = payRun.payslips.reduce((sum, payslip) => sum + payslip.net, 0);
+
+    // Vérifier que le budget de l'entreprise permet de payer
+    if (totalSalary > payRun.company.budget) {
+      throw new Error(`Budget insuffisant. Total demandé: ${totalSalary} FCFA, Budget disponible: ${payRun.company.budget} FCFA`);
+    }
+
+    // Déduire du budget
+    const newBudget = payRun.company.budget - totalSalary;
+    await prisma.company.update({
+      where: { id: payRun.company.id },
+      data: { budget: newBudget }
+    });
+
 
     // Approuver le cycle
     const updatedPayRun = await prisma.payRun.update({

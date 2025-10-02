@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
-import { Calendar } from 'lucide-react';
+import { Calendar, Trash2 } from 'lucide-react';
 
 const PayRuns = () => {
   const { user } = useAuth();
@@ -9,6 +9,7 @@ const PayRuns = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [selectedPayRun, setSelectedPayRun] = useState(null);
+  const [notification, setNotification] = useState(null);
   const [formData, setFormData] = useState({
     period: new Date().toISOString().slice(0, 7) // YYYY-MM format
   });
@@ -44,7 +45,7 @@ const PayRuns = () => {
 
     // Validation de la période
     if (!validatePeriod(formData.period)) {
-      alert('Veuillez saisir une période valide au format YYYY-MM (ex: 2024-01)');
+      showNotification('Veuillez saisir une période valide au format YYYY-MM (ex: 2024-01)', 'error');
       return;
     }
 
@@ -57,9 +58,10 @@ const PayRuns = () => {
       fetchPayRuns();
       setShowModal(false);
       resetForm();
+      showNotification('Cycle de paie créé avec succès');
     } catch (error) {
       console.error('Erreur lors de la création:', error);
-      alert('Erreur: ' + (error.response?.data?.error || error.message));
+      showNotification('Erreur: ' + (error.response?.data?.error || error.message), 'error');
     }
   };
 
@@ -69,10 +71,10 @@ const PayRuns = () => {
     try {
       await axios.post(`http://localhost:3000/api/payruns/${payRunId}/generate-payslips`);
       fetchPayRuns();
-      alert('Bulletins générés avec succès !');
+      showNotification('Bulletins générés avec succès !');
     } catch (error) {
       console.error('Erreur lors de la génération:', error);
-      alert('Erreur: ' + (error.response?.data?.error || error.message));
+      showNotification('Erreur: ' + (error.response?.data?.error || error.message), 'error');
     }
   };
 
@@ -82,10 +84,10 @@ const PayRuns = () => {
     try {
       await axios.post(`http://localhost:3000/api/payruns/${payRunId}/approve`);
       fetchPayRuns();
-      alert('Cycle approuvé avec succès !');
+      showNotification('Cycle approuvé avec succès !');
     } catch (error) {
       console.error('Erreur lors de l\'approbation:', error);
-      alert('Erreur: ' + (error.response?.data?.error || error.message));
+      showNotification('Erreur: ' + (error.response?.data?.error || error.message), 'error');
     }
   };
 
@@ -95,10 +97,10 @@ const PayRuns = () => {
     try {
       await axios.post(`http://localhost:3000/api/payruns/${payRunId}/close`);
       fetchPayRuns();
-      alert('Cycle clôturé avec succès !');
+      showNotification('Cycle clôturé avec succès !');
     } catch (error) {
       console.error('Erreur lors de la clôture:', error);
-      alert('Erreur: ' + (error.response?.data?.error || error.message));
+      showNotification('Erreur: ' + (error.response?.data?.error || error.message), 'error');
     }
   };
 
@@ -106,6 +108,29 @@ const PayRuns = () => {
     setFormData({
       period: new Date().toISOString().slice(0, 7)
     });
+  };
+
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 5000); // Disparaît après 5 secondes
+  };
+
+  const handleDelete = async (payRunId, status) => {
+    const isClosed = status === 'CLOTURE';
+    const message = isClosed
+      ? '⚠️ ATTENTION: Vous allez supprimer un cycle CLÔTURÉ. Cette action est IRRÉVERSIBLE et peut affecter les données comptables. Le budget sera remboursé automatiquement. Continuer ?'
+      : 'Êtes-vous sûr de vouloir supprimer ce cycle de paie ? Cette action est irréversible.';
+
+    if (!confirm(message)) return;
+
+    try {
+      await axios.delete(`http://localhost:3000/api/payruns/${payRunId}`);
+      fetchPayRuns();
+      showNotification('Cycle de paie supprimé avec succès');
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
+      showNotification('Erreur: ' + (error.response?.data?.error || error.message), 'error');
+    }
   };
 
   const getStatusColor = (status) => {
@@ -157,6 +182,26 @@ const PayRuns = () => {
         </div>
       </div>
 
+      {/* Notification */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-md shadow-lg ${
+          notification.type === 'error' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
+        }`}>
+          <div className="flex items-center">
+            <span className="mr-2">
+              {notification.type === 'error' ? '❌' : '✅'}
+            </span>
+            <span>{notification.message}</span>
+            <button
+              onClick={() => setNotification(null)}
+              className="ml-4 text-white hover:text-gray-200"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Main content */}
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
@@ -199,6 +244,13 @@ const PayRuns = () => {
                             >
                               Approuver
                             </button>
+                            <button
+                              onClick={() => handleDelete(payRun.id, payRun.status)}
+                              className="text-red-600 hover:text-red-900 text-sm font-medium flex items-center"
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Supprimer
+                            </button>
                           </>
                         )}
                         {payRun.status === 'APPROUVE' && (
@@ -210,7 +262,16 @@ const PayRuns = () => {
                           </button>
                         )}
                         {payRun.status === 'CLOTURE' && (
-                          <span className="text-gray-500 text-sm">Terminé</span>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-gray-500 text-sm">Terminé</span>
+                            <button
+                              onClick={() => handleDelete(payRun.id, payRun.status)}
+                              className="text-red-600 hover:text-red-900 text-sm font-medium flex items-center"
+                              title="Supprimer ce cycle clôturé"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>

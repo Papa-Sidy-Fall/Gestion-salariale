@@ -14,7 +14,7 @@ var UserRole;
     UserRole["CAISSIER"] = "CAISSIER";
     UserRole["EMPLOYEE"] = "EMPLOYEE";
 })(UserRole || (UserRole = {}));
-// Routes pour créer et lister tous les employés (Super Admin uniquement)
+// Routes pour créer et lister tous les employés (Super Admin et Admin)
 router.post('/', auth_1.authenticateToken, (0, auth_1.authorizeRoles)(UserRole.SUPER_ADMIN, UserRole.ADMIN), employeeController_1.EmployeeController.createEmployee);
 router.get('/', auth_1.authenticateToken, employeeController_1.EmployeeController.getAllEmployees);
 // Routes pour les employés spécifiques

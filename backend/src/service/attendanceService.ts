@@ -491,4 +491,106 @@ export class AttendanceService {
 
     return attendances;
   }
+
+  // Obtenir le pointage du jour pour un employé
+  static async getTodayAttendance(employeeId: string) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const attendance = await prisma.attendance.findUnique({
+      where: {
+        employeeId_date: {
+          employeeId,
+          date: today,
+        },
+      },
+      include: {
+        employee: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+    });
+
+    return attendance;
+  }
+
+  // Saisie manuelle des heures par le caissier (pour employés HONORAIRE)
+  static async manualTimeEntry(data: {
+    employeeId: string;
+    date: Date;
+    checkIn: Date;
+    checkOut: Date;
+    notes?: string;
+  }) {
+    // Vérifier que l'employé existe et est de type HONORAIRE
+    const employee = await prisma.employee.findUnique({
+      where: { id: data.employeeId },
+    });
+
+    if (!employee) {
+      throw new Error('Employé non trouvé');
+    }
+
+    if (employee.contractType !== 'HONORAIRE') {
+      throw new Error('Cette fonctionnalité est réservée aux employés HONORAIRE');
+    }
+
+    // Calculer les heures travaillées
+    const diffMs = data.checkOut.getTime() - data.checkIn.getTime();
+    const hoursWorked = diffMs / (1000 * 60 * 60); // Convertir en heures
+
+    if (hoursWorked <= 0) {
+      throw new Error('L\'heure de départ doit être après l\'heure d\'arrivée');
+    }
+
+    // Vérifier si un pointage existe déjà pour cette date
+    const existing = await prisma.attendance.findUnique({
+      where: {
+        employeeId_date: {
+          employeeId: data.employeeId,
+          date: data.date,
+        },
+      },
+    });
+
+    if (existing) {
+      // Mettre à jour le pointage existant
+      return await prisma.attendance.update({
+        where: { id: existing.id },
+        data: {
+          checkIn: data.checkIn,
+          checkOut: data.checkOut,
+          hoursWorked,
+          status: AttendanceStatus.PRESENT,
+          notes: data.notes,
+        },
+        include: {
+          employee: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              position: true,
+              contractType: true,
+              hourlyRate: true,
+            },
+          },
+        },
+      });
+    }
+
+    // Créer un nouveau pointage
+    return await this.createAttendance({
+      employeeId: data.employeeId,
+      date: data.date,
+      checkIn: data.checkIn,
+      checkOut: data.checkOut,
+      status: AttendanceStatus.PRESENT,
+      notes: data.notes,
+    });
+  }
 }

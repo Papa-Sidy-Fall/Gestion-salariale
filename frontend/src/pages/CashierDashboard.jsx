@@ -1,32 +1,47 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { DollarSign, Clock, CheckCircle, AlertCircle, FileText, CreditCard } from 'lucide-react';
+import { DollarSign, Clock, CheckCircle, AlertCircle, FileText, CreditCard, Calculator } from 'lucide-react';
 
 const CashierDashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [pendingPayslips, setPendingPayslips] = useState([]);
   const [todayPayments, setTodayPayments] = useState([]);
+  const [honoraireEmployees, setHonoraireEmployees] = useState([]);
   const [stats, setStats] = useState({
     todayPayments: 0,
     todayAmount: 0,
     pendingCount: 0,
-    pendingAmount: 0
+    pendingAmount: 0,
+    budget: 0
   });
   const [loading, setLoading] = useState(true);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showManualEntryModal, setShowManualEntryModal] = useState(false);
   const [selectedPayslip, setSelectedPayslip] = useState(null);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [paymentData, setPaymentData] = useState({
     amount: '',
     method: 'ESPECES'
   });
+  const [manualEntryData, setManualEntryData] = useState({
+    employeeId: '',
+    date: new Date().toISOString().split('T')[0],
+    checkIn: '',
+    checkOut: '',
+    notes: ''
+  });
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     fetchPendingPayslips();
     fetchTodayPayments();
+    fetchHonoraireEmployees();
+    fetchCompanyStats();
   }, []);
+
 
   const fetchPendingPayslips = async () => {
     try {
@@ -78,7 +93,7 @@ const CashierDashboard = () => {
 
       // Filtrer les paiements du jour
       const today = new Date().toDateString();
-      const todayPaymentsList = allPayments.filter(p => 
+      const todayPaymentsList = allPayments.filter(p =>
         new Date(p.date).toDateString() === today
       );
 
@@ -92,6 +107,32 @@ const CashierDashboard = () => {
       }));
     } catch (error) {
       console.error('Erreur lors du chargement des paiements:', error);
+    }
+  };
+
+  const fetchHonoraireEmployees = async () => {
+    try {
+      const companyId = user?.companyId;
+      const response = await axios.get(`http://localhost:3000/api/employees?companyId=${companyId}`);
+      const employees = response.data.employees.filter(e =>
+        e.isActive && e.contractType === 'HONORAIRE'
+      );
+      setHonoraireEmployees(employees);
+    } catch (error) {
+      console.error('Erreur lors du chargement des employés honoraires:', error);
+    }
+  };
+
+  const fetchCompanyStats = async () => {
+    try {
+      const companyId = user?.companyId;
+      const response = await axios.get(`http://localhost:3000/api/companies/${companyId}/stats`);
+      setStats(prev => ({
+        ...prev,
+        budget: response.data.budget || 0
+      }));
+    } catch (error) {
+      console.error('Erreur lors du chargement des statistiques entreprise:', error);
     }
   };
 
@@ -110,10 +151,10 @@ const CashierDashboard = () => {
       setShowPaymentModal(false);
       setSelectedPayslip(null);
       setPaymentData({ amount: '', method: 'ESPECES' });
-      alert('Paiement enregistré avec succès!');
+      showNotification('Paiement enregistré avec succès!');
     } catch (error) {
       console.error('Erreur lors du paiement:', error);
-      alert('Erreur: ' + (error.response?.data?.error || error.message));
+      showNotification('Erreur: ' + (error.response?.data?.error || error.message), 'error');
     }
   };
 
@@ -142,8 +183,78 @@ const CashierDashboard = () => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Erreur lors du téléchargement:', error);
-      alert('Erreur lors du téléchargement de la facture');
+      showNotification('Erreur lors du téléchargement de la facture', 'error');
     }
+  };
+
+  const calculateHours = useCallback((checkIn, checkOut) => {
+    if (!checkIn || !checkOut) return 0;
+    const diffMs = new Date(`2000-01-01T${checkOut}`) - new Date(`2000-01-01T${checkIn}`);
+    const hours = diffMs / (1000 * 60 * 60);
+    return Math.round(hours * 10) / 10; // Arrondi à 1 décimale, retourne un nombre
+  }, []);
+
+  const calculateAmount = useCallback((hours, hourlyRate) => {
+    if (!hours || !hourlyRate) return 0;
+    const amount = hours * hourlyRate;
+    return Math.round(amount); // Retourne un entier arrondi
+  }, []);
+
+  // Calculs mémorisés pour le modal
+  const calculatedHours = useMemo(() => {
+    if (!manualEntryData.checkIn || !manualEntryData.checkOut) return 0;
+    return calculateHours(manualEntryData.checkIn, manualEntryData.checkOut);
+  }, [manualEntryData.checkIn, manualEntryData.checkOut, calculateHours]);
+
+  const calculatedAmount = useMemo(() => {
+    if (!calculatedHours || !selectedEmployee?.hourlyRate) return 0;
+    return calculateAmount(calculatedHours, selectedEmployee.hourlyRate);
+  }, [calculatedHours, selectedEmployee?.hourlyRate, calculateAmount]);
+
+  const handleManualEntry = async (e) => {
+    e.preventDefault();
+
+    try {
+      const data = {
+        ...manualEntryData,
+        checkIn: new Date(`${manualEntryData.date}T${manualEntryData.checkIn}`).toISOString(),
+        checkOut: new Date(`${manualEntryData.date}T${manualEntryData.checkOut}`).toISOString(),
+        date: new Date(manualEntryData.date).toISOString()
+      };
+
+      await axios.post('http://localhost:3000/api/attendances/manual-entry', data);
+
+      setShowManualEntryModal(false);
+      resetManualEntryForm();
+      showNotification('Heures saisies avec succès!');
+    } catch (error) {
+      console.error('Erreur lors de la saisie manuelle:', error);
+      showNotification('Erreur: ' + (error.response?.data?.error || error.message), 'error');
+    }
+  };
+
+  const resetManualEntryForm = () => {
+    setManualEntryData({
+      employeeId: '',
+      date: new Date().toISOString().split('T')[0],
+      checkIn: '',
+      checkOut: '',
+      notes: ''
+    });
+  };
+
+  const openManualEntryModal = (employee) => {
+    setSelectedEmployee(employee);
+    setManualEntryData({
+      ...manualEntryData,
+      employeeId: employee.id
+    });
+    setShowManualEntryModal(true);
+  };
+
+  const showNotification = (message, type = 'success') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 5000); // Disparaît après 5 secondes
   };
 
   const StatCard = ({ title, value, icon: Icon, color, subtitle }) => (
@@ -214,13 +325,33 @@ const CashierDashboard = () => {
         </div>
       </div>
 
+      {/* Notification */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-50 p-4 rounded-md shadow-lg ${
+          notification.type === 'error' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'
+        }`}>
+          <div className="flex items-center">
+            <span className="mr-2">
+              {notification.type === 'error' ? '❌' : '✅'}
+            </span>
+            <span>{notification.message}</span>
+            <button
+              onClick={() => setNotification(null)}
+              className="ml-4 text-white hover:text-gray-200"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Main content */}
       <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           {/* Statistiques du Jour */}
           <div className="mb-8">
             <h2 className="text-lg font-medium text-gray-900 mb-4">Statistiques du Jour</h2>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
               <StatCard
                 title="Paiements Effectués"
                 value={stats.todayPayments}
@@ -246,6 +377,12 @@ const CashierDashboard = () => {
                 value={`${stats.pendingAmount.toLocaleString()} FCFA`}
                 icon={AlertCircle}
                 color="border-l-4 border-red-500"
+              />
+              <StatCard
+                title="Budget Restant"
+                value={`${stats.budget.toLocaleString()} FCFA`}
+                icon={DollarSign}
+                color="border-l-4 border-green-500"
               />
             </div>
           </div>
@@ -336,6 +473,44 @@ const CashierDashboard = () => {
               )}
             </div>
           </div>
+
+          {/* Employés Honoraires */}
+          {honoraireEmployees.length > 0 && (
+            <div className="mt-8 bg-white shadow overflow-hidden sm:rounded-md">
+              <div className="px-4 py-5 sm:px-6 bg-purple-50">
+                <h3 className="text-lg leading-6 font-medium text-gray-900 flex items-center">
+                  <Calculator className="h-5 w-5 mr-2 text-purple-600" />
+                  Employés Honoraires - Saisie des Heures
+                </h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  Saisissez manuellement les heures travaillées pour calculer automatiquement le montant.
+                </p>
+              </div>
+              <ul className="divide-y divide-gray-200">
+                {honoraireEmployees.map((employee) => (
+                  <li key={employee.id} className="px-6 py-4 hover:bg-gray-50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-900">
+                          {employee.firstName} {employee.lastName}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {employee.position} • {employee.hourlyRate} FCFA/h
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => openManualEntryModal(employee)}
+                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center"
+                      >
+                        <Calculator className="h-4 w-4 mr-1" />
+                        Saisir Heures
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Actions Rapides */}
           <div className="mt-8 bg-white shadow overflow-hidden sm:rounded-md p-6">
@@ -433,6 +608,101 @@ const CashierDashboard = () => {
                     className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700"
                   >
                     Enregistrer le Paiement
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Saisie Manuelle des Heures */}
+      {showManualEntryModal && selectedEmployee && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+                <Calculator className="h-6 w-6 mr-2 text-purple-600" />
+                Saisie Manuelle des Heures
+              </h3>
+              <div className="mb-4 bg-gray-50 p-4 rounded-md">
+                <p className="text-sm text-gray-600">
+                  <strong>Employé:</strong> {selectedEmployee.firstName} {selectedEmployee.lastName}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <strong>Taux horaire:</strong> {selectedEmployee.hourlyRate} FCFA/h
+                </p>
+                {manualEntryData.checkIn && manualEntryData.checkOut && (
+                  <div className="mt-2 p-2 bg-purple-50 rounded">
+                    <p className="text-sm font-medium text-purple-800">
+                      Heures travaillées: {calculatedHours.toFixed(1)}h
+                    </p>
+                    <p className="text-sm font-medium text-purple-800">
+                      Montant estimé: {calculatedAmount.toLocaleString()} FCFA
+                    </p>
+                  </div>
+                )}
+              </div>
+              <form onSubmit={handleManualEntry} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Date *</label>
+                  <input
+                    type="date"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    value={manualEntryData.date}
+                    onChange={(e) => setManualEntryData({...manualEntryData, date: e.target.value})}
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Heure arrivée *</label>
+                    <input
+                      type="time"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                      value={manualEntryData.checkIn}
+                      onChange={(e) => setManualEntryData({...manualEntryData, checkIn: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Heure départ *</label>
+                    <input
+                      type="time"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                      value={manualEntryData.checkOut}
+                      onChange={(e) => setManualEntryData({...manualEntryData, checkOut: e.target.value})}
+                      required
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Notes</label>
+                  <textarea
+                    rows="2"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    value={manualEntryData.notes}
+                    onChange={(e) => setManualEntryData({...manualEntryData, notes: e.target.value})}
+                    placeholder="Notes optionnelles..."
+                  />
+                </div>
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowManualEntryModal(false);
+                      setSelectedEmployee(null);
+                      resetManualEntryForm();
+                    }}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700"
+                  >
+                    Enregistrer les Heures
                   </button>
                 </div>
               </form>

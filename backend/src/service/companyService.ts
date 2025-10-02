@@ -106,7 +106,7 @@ export class CompanyService {
   }
 
   static async getCompanyStats(companyId: string) {
-    const [employeeCount, totalSalary, payRunsCount] = await Promise.all([
+    const [employeeCount, totalSalary, payRunsCount, company] = await Promise.all([
       prisma.employee.count({
         where: { companyId, isActive: true }
       }),
@@ -116,13 +116,17 @@ export class CompanyService {
       }),
       prisma.payRun.count({
         where: { companyId }
+      }),
+      prisma.company.findUnique({
+        where: { id: companyId }
       })
     ]);
 
     return {
       employeeCount,
       totalSalary: totalSalary._sum.rate || 0,
-      payRunsCount
+      payRunsCount,
+      budget: company?.budget || 0
     };
   }
 }

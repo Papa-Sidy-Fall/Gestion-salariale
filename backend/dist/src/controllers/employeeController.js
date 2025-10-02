@@ -6,8 +6,6 @@ class EmployeeController {
     static async createEmployee(req, res) {
         var _a, _b, _c, _d;
         try {
-            console.log('Données reçues:', req.body);
-            console.log('Utilisateur:', req.user);
             const { companyId } = req.body;
             // Vérifier les permissions : Super admin peut créer partout, Admin seulement dans son entreprise
             if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== 'SUPER_ADMIN' && ((_b = req.user) === null || _b === void 0 ? void 0 : _b.companyId) !== companyId) {

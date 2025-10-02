@@ -154,6 +154,8 @@ export declare class PayRunService {
             position: string;
             contractType: import(".prisma/client").$Enums.ContractType;
             rate: number;
+            dailyRate: number | null;
+            hourlyRate: number | null;
             bankDetails: string | null;
             isActive: boolean;
         };
@@ -191,6 +193,8 @@ export declare class PayRunService {
                 position: string;
                 contractType: import(".prisma/client").$Enums.ContractType;
                 rate: number;
+                dailyRate: number | null;
+                hourlyRate: number | null;
                 bankDetails: string | null;
                 isActive: boolean;
             };
@@ -245,6 +249,8 @@ export declare class PayRunService {
                 position: string;
                 contractType: import(".prisma/client").$Enums.ContractType;
                 rate: number;
+                dailyRate: number | null;
+                hourlyRate: number | null;
                 bankDetails: string | null;
                 isActive: boolean;
             };
