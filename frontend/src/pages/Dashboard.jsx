@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Users, DollarSign, CheckCircle, Clock, Plus, FileText, CreditCard, BarChart3, Check } from 'lucide-react';
+import { Users, DollarSign, CheckCircle, Clock, Plus, FileText, CreditCard, BarChart3, Check, Building2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
@@ -20,14 +20,8 @@ const Dashboard = () => {
   });
 
   // Données du graphique - évolution de la masse salariale sur 6 mois
-  const [salaryEvolution, setSalaryEvolution] = useState([
-    { month: 'Juillet', amount: 1200000 },
-    { month: 'Août', amount: 1250000 },
-    { month: 'Septembre', amount: 1300000 },
-    { month: 'Octobre', amount: 1350000 },
-    { month: 'Novembre', amount: 1400000 },
-    { month: 'Décembre', amount: 1500000 }
-  ]);
+  const [salaryEvolution, setSalaryEvolution] = useState([]);
+  const [chartLoading, setChartLoading] = useState(false);
 
   // Charger l'entreprise sélectionnée et les statistiques
   useEffect(() => {
@@ -105,9 +99,75 @@ const Dashboard = () => {
       };
 
       setStats(newStats);
+
+      // Récupérer les données du graphique (évolution sur 6 mois)
+      await fetchSalaryEvolution(companyIdParam);
     } catch (error) {
       console.error('Erreur lors du chargement des statistiques:', error);
       // En cas d'erreur, garder les données par défaut
+    }
+  };
+
+  const fetchSalaryEvolution = async (companyId) => {
+    setChartLoading(true);
+    try {
+      // Générer les 6 derniers mois
+      const months = [];
+      const currentDate = new Date();
+
+      for (let i = 5; i >= 0; i--) {
+        const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+        const period = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        const monthName = date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+
+        months.push({ period, monthName });
+      }
+
+      // Pour chaque mois, récupérer les payruns et calculer la masse salariale
+      const evolutionData = [];
+
+      for (const month of months) {
+        try {
+          const payRunsResponse = await axios.get(`http://localhost:3000/api/payruns?companyId=${companyId}&period=${month.period}`);
+          const payRuns = payRunsResponse.data.payRuns || [];
+
+          // Calculer la masse salariale totale pour ce mois
+          let totalSalary = 0;
+          payRuns.forEach(payRun => {
+            if (payRun.payslips) {
+              payRun.payslips.forEach(payslip => {
+                totalSalary += payslip.gross || 0;
+              });
+            }
+          });
+
+          evolutionData.push({
+            month: month.monthName.charAt(0).toUpperCase() + month.monthName.slice(1),
+            amount: totalSalary
+          });
+        } catch (error) {
+          // Si pas de données pour ce mois, mettre 0
+          evolutionData.push({
+            month: month.monthName.charAt(0).toUpperCase() + month.monthName.slice(1),
+            amount: 0
+          });
+        }
+      }
+
+      setSalaryEvolution(evolutionData);
+    } catch (error) {
+      console.error('Erreur lors du chargement des données du graphique:', error);
+      // Données par défaut si erreur
+      setSalaryEvolution([
+        { month: 'Mois 1', amount: 0 },
+        { month: 'Mois 2', amount: 0 },
+        { month: 'Mois 3', amount: 0 },
+        { month: 'Mois 4', amount: 0 },
+        { month: 'Mois 5', amount: 0 },
+        { month: 'Mois 6', amount: 0 }
+      ]);
+    } finally {
+      setChartLoading(false);
     }
   };
 
@@ -153,36 +213,57 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white shadow">
+      <div className={`shadow ${selectedCompany && user?.role === 'SUPER_ADMIN' ? 'bg-gradient-to-r from-indigo-50 to-blue-50 border-b-4' : 'bg-white'}`}
+           style={selectedCompany && user?.role === 'SUPER_ADMIN' ? { borderBottomColor: selectedCompany.color || '#6FA4AF' } : {}}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              {/* Logo de l'entreprise si disponible */}
+              {/* Logo de l'entreprise si disponible - PLUS VISIBLE */}
               {(selectedCompany?.logo || user?.company?.logo) && (
-                <img
-                  src={selectedCompany?.logo || user?.company?.logo}
-                  alt="Logo entreprise"
-                  className="h-10 w-10 mr-4 rounded-lg object-cover"
-                  style={{
-                    filter: `hue-rotate(${(selectedCompany?.color || user?.company?.color) ? '0deg' : '0deg'})`,
-                    backgroundColor: selectedCompany?.color || user?.company?.color || '#6FA4AF'
-                  }}
-                  onError={(e) => {
-                    e.target.style.display = 'none';
-                    console.warn('Erreur de chargement du logo:', e.target.src);
-                  }}
-                />
+                <div className="flex items-center mr-6">
+                  <img
+                    src={selectedCompany?.logo || user?.company?.logo}
+                    alt="Logo entreprise"
+                    className="h-14 w-14 rounded-xl object-cover shadow-lg border-2 border-white"
+                    style={{
+                      backgroundColor: selectedCompany?.color || user?.company?.color || '#6FA4AF',
+                      boxShadow: `0 4px 8px rgba(0,0,0,0.1), 0 0 0 2px ${selectedCompany?.color || user?.company?.color || '#6FA4AF'}20`
+                    }}
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      console.warn('Erreur de chargement du logo:', e.target.src);
+                    }}
+                  />
+                  {selectedCompany && user?.role === 'SUPER_ADMIN' && (
+                    <div className="ml-3">
+                      <h2 className="text-lg font-bold text-gray-900 leading-tight">
+                        {selectedCompany.name}
+                      </h2>
+                      <p className="text-xs text-indigo-600 font-medium">
+                        Dashboard entreprise
+                      </p>
+                    </div>
+                  )}
+                </div>
               )}
-              <h1 className="text-2xl font-bold text-gray-900">
-                {user?.role === 'SUPER_ADMIN' ? 'Gestion des Entreprises' :
-                 user?.role === 'ADMIN' ? 'Tableau de bord' :
-                 'Gestion des Paiements'}
+
+              {/* Titre principal avec indicateur d'entreprise */}
+              <div className="flex flex-col">
+                <h1 className="text-2xl font-bold text-gray-900">
+                  {user?.role === 'SUPER_ADMIN' && !selectedCompany ? 'Vue Globale - Super Admin' :
+                   user?.role === 'SUPER_ADMIN' && selectedCompany ? 'Gestion des Entreprises' :
+                   user?.role === 'ADMIN' ? 'Tableau de bord' :
+                   'Gestion des Paiements'}
+                </h1>
                 {selectedCompany && user?.role === 'SUPER_ADMIN' && (
-                  <span className="ml-2 text-sm text-indigo-600 font-normal">
-                    - {selectedCompany.name}
-                  </span>
+                  <div className="flex items-center mt-1">
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800 border border-indigo-200">
+                      <Building2 className="h-4 w-4 mr-1" />
+                      Entreprise sélectionnée: {selectedCompany.name}
+                    </span>
+                  </div>
                 )}
-              </h1>
+              </div>
             </div>
             <div className="flex items-center space-x-4">
               {/* Navigation selon le rôle */}
@@ -285,6 +366,43 @@ const Dashboard = () => {
           ) : (user?.role === 'ADMIN' || (user?.role === 'SUPER_ADMIN' && selectedCompany)) ? (
             /* Vue Admin - Dashboard complet */
             <>
+              {/* Indicateur d'entreprise sélectionnée pour Super Admin */}
+              {selectedCompany && user?.role === 'SUPER_ADMIN' && (
+                <div className="mb-6 bg-gradient-to-r from-indigo-50 to-blue-50 border-l-4 border-indigo-500 p-4 rounded-lg">
+                  <div className="flex items-center">
+                    <div className="flex-shrink-0">
+                      <img
+                        src={selectedCompany.logo}
+                        alt="Logo entreprise"
+                        className="h-12 w-12 rounded-lg object-cover border-2 border-white shadow-md"
+                        style={{ backgroundColor: selectedCompany.color || '#6FA4AF' }}
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                    <div className="ml-4">
+                      <h2 className="text-lg font-bold text-gray-900">
+                        Dashboard de l'entreprise: {selectedCompany.name}
+                      </h2>
+                      <p className="text-sm text-gray-600">
+                        Vous consultez actuellement les données de cette entreprise.
+                        <button
+                          onClick={() => {
+                            localStorage.removeItem('selectedCompany');
+                            setSelectedCompany(null);
+                            window.location.reload();
+                          }}
+                          className="ml-2 text-indigo-600 hover:text-indigo-800 font-medium underline"
+                        >
+                          Retour à la vue globale
+                        </button>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Stats Cards */}
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 mb-8">
                 <StatCard
@@ -322,25 +440,40 @@ const Dashboard = () => {
                   Évolution de la masse salariale (6 derniers mois)
                 </h3>
                 <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={salaryEvolution}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="month" />
-                      <YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} />
-                      <Tooltip
-                        formatter={(value) => [`${value.toLocaleString()} FCFA`, 'Masse salariale']}
-                        labelStyle={{ color: '#374151' }}
-                      />
-                      <Line
-                        type="monotone"
-                        dataKey="amount"
-                        stroke="#3B82F6"
-                        strokeWidth={3}
-                        dot={{ fill: '#3B82F6', strokeWidth: 2, r: 6 }}
-                        activeDot={{ r: 8, stroke: '#3B82F6', strokeWidth: 2 }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  {chartLoading ? (
+                    <div className="flex items-center justify-center h-full">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                      <span className="ml-3 text-gray-600">Chargement des données...</span>
+                    </div>
+                  ) : salaryEvolution.length > 0 && salaryEvolution.some(item => item.amount > 0) ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={salaryEvolution}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="month" />
+                        <YAxis tickFormatter={(value) => `${(value / 1000000).toFixed(1)}M`} />
+                        <Tooltip
+                          formatter={(value) => [`${value.toLocaleString()} FCFA`, 'Masse salariale']}
+                          labelStyle={{ color: '#374151' }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="amount"
+                          stroke="#3B82F6"
+                          strokeWidth={3}
+                          dot={{ fill: '#3B82F6', strokeWidth: 2, r: 6 }}
+                          activeDot={{ r: 8, stroke: '#3B82F6', strokeWidth: 2 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                      <BarChart3 className="h-16 w-16 mb-4 text-gray-300" />
+                      <p className="text-center">
+                        Aucune donnée de paie disponible pour les 6 derniers mois.<br />
+                        <span className="text-sm">Les données apparaîtront après la création des premiers cycles de paie.</span>
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

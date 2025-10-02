@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Building2, Users, UserPlus, ArrowLeft, User, Briefcase, CreditCard, ChevronDown, Edit, Trash2, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Building2, Users, UserPlus, ArrowLeft, User, Briefcase, CreditCard, ChevronDown, Edit, Trash2, Mail, Lock, Eye, EyeOff, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 const Companies = () => {
   const { user } = useAuth();
@@ -30,6 +30,7 @@ const Companies = () => {
     rate: '',
     bankDetails: ''
   });
+  const [notifications, setNotifications] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -94,6 +95,19 @@ const Companies = () => {
     return !isNaN(num) && num > 0;
   };
 
+  // Fonctions de notifications
+  const addNotification = (type, title, message) => {
+    const id = Date.now();
+    setNotifications(prev => [...prev, { id, type, title, message }]);
+    setTimeout(() => {
+      removeNotification(id);
+    }, 5000);
+  };
+
+  const removeNotification = (id) => {
+    setNotifications(prev => prev.filter(notification => notification.id !== id));
+  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -101,33 +115,33 @@ const Companies = () => {
     // Validations avec regex
     if (!editingCompany) {
       if (!validateCompanyName(formData.name)) {
-        alert('Le nom de l\'entreprise doit contenir au moins 2 caractères (lettres, chiffres, espaces, tirets autorisés)');
+        addNotification('error', 'Nom invalide', 'Le nom de l\'entreprise doit contenir au moins 2 caractères (lettres, chiffres, espaces, tirets autorisés)');
         return;
       }
 
       if (!validateEmail(formData.adminEmail)) {
-        alert('Veuillez saisir une adresse email valide');
+        addNotification('error', 'Email invalide', 'Veuillez saisir une adresse email valide');
         return;
       }
 
       if (!validatePassword(formData.adminPassword)) {
-        alert('Le mot de passe doit contenir au moins 6 caractères avec au moins une lettre et un chiffre');
+        addNotification('error', 'Mot de passe faible', 'Le mot de passe doit contenir au moins 6 caractères avec au moins une lettre et un chiffre');
         return;
       }
 
       if (formData.adminPassword !== formData.confirmPassword) {
-        alert('Les mots de passe ne correspondent pas');
+        addNotification('error', 'Mots de passe différents', 'Les mots de passe ne correspondent pas');
         return;
       }
     }
 
     if (formData.phone && !validatePhone(formData.phone)) {
-      alert('Veuillez saisir un numéro de téléphone valide');
+      addNotification('error', 'Téléphone invalide', 'Veuillez saisir un numéro de téléphone valide');
       return;
     }
 
     if (formData.email && !validateEmail(formData.email)) {
-      alert('Veuillez saisir une adresse email valide pour l\'entreprise');
+      addNotification('error', 'Email invalide', 'Veuillez saisir une adresse email valide pour l\'entreprise');
       return;
     }
 
@@ -149,7 +163,7 @@ const Companies = () => {
       } else {
         const response = await axios.post('http://localhost:3000/api/companies', companyData);
         company = response.data.company;
-        alert(`Entreprise créée avec succès !\nAdmin: ${response.data.admin.email}\nMot de passe: ${formData.adminPassword}`);
+        addNotification('success', 'Entreprise créée', `L'entreprise "${company.name}" a été créée avec succès. L'admin peut se connecter avec ${response.data.admin.email}`);
       }
 
       // Upload du logo si un fichier a été sélectionné
@@ -165,7 +179,7 @@ const Companies = () => {
           });
         } catch (logoError) {
           console.error('Erreur lors de l\'upload du logo:', logoError);
-          alert('Entreprise créée mais erreur lors de l\'upload du logo');
+          addNotification('warning', 'Logo non uploadé', 'Entreprise créée mais le logo n\'a pas pu être uploadé');
         }
       }
 
@@ -175,7 +189,7 @@ const Companies = () => {
       setEditingCompany(null);
     } catch (error) {
       console.error('Erreur lors de la sauvegarde:', error);
-      alert('Erreur: ' + (error.response?.data?.error || error.message));
+      addNotification('error', 'Erreur de sauvegarde', error.response?.data?.error || error.message);
     }
   };
 
@@ -221,17 +235,17 @@ const Companies = () => {
     e.preventDefault();
 
     if (!validateEmail(userFormData.email)) {
-      alert('Veuillez saisir une adresse email valide');
+      addNotification('error', 'Email invalide', 'Veuillez saisir une adresse email valide');
       return;
     }
 
     if (!validatePassword(userFormData.password)) {
-      alert('Le mot de passe doit contenir au moins 6 caractères avec au moins une lettre et un chiffre');
+      addNotification('error', 'Mot de passe faible', 'Le mot de passe doit contenir au moins 6 caractères avec au moins une lettre et un chiffre');
       return;
     }
 
     if (userFormData.password !== userFormData.confirmPassword) {
-      alert('Les mots de passe ne correspondent pas');
+      addNotification('error', 'Mots de passe différents', 'Les mots de passe ne correspondent pas');
       return;
     }
 
@@ -251,10 +265,10 @@ const Companies = () => {
         confirmPassword: '',
         role: 'CAISSIER'
       });
-      alert('Utilisateur créé avec succès');
+      addNotification('success', 'Utilisateur créé', `L'utilisateur ${userFormData.email} a été créé avec succès`);
     } catch (error) {
       console.error('Erreur lors de la création:', error);
-      alert('Erreur: ' + (error.response?.data?.error || error.message));
+      addNotification('error', 'Erreur de création', error.response?.data?.error || error.message);
     }
   };
 
@@ -262,22 +276,22 @@ const Companies = () => {
     e.preventDefault();
 
     if (!validateName(employeeFormData.firstName)) {
-      alert('Le prénom doit contenir au moins 2 caractères');
+      addNotification('error', 'Prénom invalide', 'Le prénom doit contenir au moins 2 caractères');
       return;
     }
 
     if (!validateName(employeeFormData.lastName)) {
-      alert('Le nom doit contenir au moins 2 caractères');
+      addNotification('error', 'Nom invalide', 'Le nom doit contenir au moins 2 caractères');
       return;
     }
 
     if (!validatePosition(employeeFormData.position)) {
-      alert('Le poste doit contenir au moins 2 caractères');
+      addNotification('error', 'Poste invalide', 'Le poste doit contenir au moins 2 caractères');
       return;
     }
 
     if (!validateAmount(employeeFormData.rate)) {
-      alert('Le salaire doit être un nombre positif valide');
+      addNotification('error', 'Salaire invalide', 'Le salaire doit être un nombre positif valide');
       return;
     }
 
@@ -300,10 +314,10 @@ const Companies = () => {
         rate: '',
         bankDetails: ''
       });
-      alert('Employé créé avec succès');
+      addNotification('success', 'Employé créé', `${employeeFormData.firstName} ${employeeFormData.lastName} a été ajouté avec succès`);
     } catch (error) {
       console.error('Erreur lors de la création:', error);
-      alert('Erreur: ' + (error.response?.data?.error || error.message));
+      addNotification('error', 'Erreur de création', error.response?.data?.error || error.message);
     }
   };
 
@@ -311,15 +325,15 @@ const Companies = () => {
 
 
   const handleDelete = async (companyId) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette entreprise ?')) return;
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette entreprise ? Cette action est irréversible.')) return;
 
     try {
       await axios.delete(`http://localhost:3000/api/companies/${companyId}`);
       fetchCompanies();
-      alert('Entreprise supprimée avec succès');
+      addNotification('success', 'Entreprise supprimée', 'L\'entreprise a été supprimée avec succès');
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
-      alert('Erreur: ' + (error.response?.data?.error || error.message));
+      addNotification('error', 'Erreur de suppression', error.response?.data?.error || error.message);
     }
   };
 
@@ -718,13 +732,51 @@ const Companies = () => {
                     <label className="block text-sm font-semibold text-gray-800">
                       🎨 Couleur principale
                     </label>
-                    <div className="relative">
-                      <input
-                        type="color"
-                        className="w-full h-12 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 cursor-pointer"
-                        value={formData.color}
-                        onChange={(e) => setFormData({...formData, color: e.target.value})}
-                      />
+                    <div className="space-y-3">
+                      {/* Sélecteur de couleurs prédéfinies */}
+                      <div className="grid grid-cols-6 gap-2">
+                        {[
+                          { name: 'Bleu', value: '#3B82F6', bg: 'bg-blue-500' },
+                          { name: 'Vert', value: '#10B981', bg: 'bg-green-500' },
+                          { name: 'Violet', value: '#8B5CF6', bg: 'bg-purple-500' },
+                          { name: 'Rouge', value: '#EF4444', bg: 'bg-red-500' },
+                          { name: 'Orange', value: '#F97316', bg: 'bg-orange-500' },
+                          { name: 'Rose', value: '#EC4899', bg: 'bg-pink-500' },
+                          { name: 'Indigo', value: '#6366F1', bg: 'bg-indigo-500' },
+                          { name: 'Teal', value: '#14B8A6', bg: 'bg-teal-500' },
+                          { name: 'Cyan', value: '#06B6D4', bg: 'bg-cyan-500' },
+                          { name: 'Emeraude', value: '#059669', bg: 'bg-emerald-500' },
+                          { name: 'Ambre', value: '#F59E0B', bg: 'bg-amber-500' },
+                          { name: 'Gris', value: '#6B7280', bg: 'bg-gray-500' }
+                        ].map((color) => (
+                          <button
+                            key={color.value}
+                            type="button"
+                            onClick={() => setFormData({...formData, color: color.value})}
+                            className={`w-10 h-10 rounded-lg border-2 transition-all duration-200 ${
+                              formData.color === color.value
+                                ? 'border-gray-800 scale-110 shadow-lg'
+                                : 'border-gray-300 hover:border-gray-400 hover:scale-105'
+                            } ${color.bg} flex items-center justify-center`}
+                            title={color.name}
+                          >
+                            {formData.color === color.value && (
+                              <CheckCircle className="h-5 w-5 text-white" />
+                            )}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Sélecteur personnalisé */}
+                      <div className="flex items-center space-x-3">
+                        <span className="text-sm text-gray-600">Ou couleur personnalisée:</span>
+                        <input
+                          type="color"
+                          className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
+                          value={formData.color}
+                          onChange={(e) => setFormData({...formData, color: e.target.value})}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1177,6 +1229,49 @@ const Companies = () => {
           </div>
         </div>
       )}
+
+      {/* Notifications Toast */}
+      <div className="fixed top-4 right-4 z-50 space-y-2">
+        {notifications.map((notification) => (
+          <div
+            key={notification.id}
+            className={`max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 transform transition-all duration-300 ease-in-out ${
+              notification.type === 'success' ? 'border-l-4 border-green-500' :
+              notification.type === 'error' ? 'border-l-4 border-red-500' :
+              notification.type === 'warning' ? 'border-l-4 border-yellow-500' :
+              'border-l-4 border-blue-500'
+            }`}
+          >
+            <div className="p-4">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  {notification.type === 'success' && <CheckCircle className="h-6 w-6 text-green-400" />}
+                  {notification.type === 'error' && <XCircle className="h-6 w-6 text-red-400" />}
+                  {notification.type === 'warning' && <AlertCircle className="h-6 w-6 text-yellow-400" />}
+                  {notification.type === 'info' && <AlertCircle className="h-6 w-6 text-blue-400" />}
+                </div>
+                <div className="ml-3 w-0 flex-1 pt-0.5">
+                  <p className="text-sm font-medium text-gray-900">
+                    {notification.title}
+                  </p>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {notification.message}
+                  </p>
+                </div>
+                <div className="ml-4 flex-shrink-0 flex">
+                  <button
+                    onClick={() => removeNotification(notification.id)}
+                    className="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                  >
+                    <span className="sr-only">Fermer</span>
+                    <XCircle className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
 
     </div>
   );
