@@ -5,6 +5,7 @@ import companyRoutes from "./routes/company";
 import employeeRoutes from "./routes/employee";
 import payRunRoutes from "./routes/payRun";
 import paymentRoutes from "./routes/payment";
+import attendanceRoutes from "./routes/attendance";
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use("/api/companies", companyRoutes);
 app.use("/api/employees", employeeRoutes);
 app.use("/api/payruns", payRunRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/attendances", attendanceRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("🚀 Serveur Express + TypeScript prêt !");

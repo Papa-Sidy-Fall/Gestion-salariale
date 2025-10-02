@@ -6,6 +6,7 @@ import Employees from './pages/Employees';
 import PayRuns from './pages/PayRuns';
 import Payments from './pages/Payments';
 import Companies from './pages/Companies';
+import Attendances from './pages/Attendances';
 import './App.css';
 
 function App() {
@@ -42,15 +43,23 @@ function App() {
             <Route
               path="/payments"
               element={
-                <ProtectedRoute allowedRoles={['CAISSIER']}>
+                <ProtectedRoute allowedRoles={['CAISSIER', 'ADMIN']}>
                   <Payments />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/attendances"
+              element={
+                <ProtectedRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
+                  <Attendances />
                 </ProtectedRoute>
               }
             />
             <Route
               path="/companies"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
                   <Companies />
                 </ProtectedRoute>
               }

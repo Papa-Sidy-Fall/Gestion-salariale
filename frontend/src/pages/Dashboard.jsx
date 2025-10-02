@@ -4,9 +4,8 @@ import { Users, DollarSign, CheckCircle, Clock, Plus, FileText, CreditCard, BarC
 import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import axios from 'axios';
-
-
-
+import SuperAdminDashboard from './SuperAdminDashboard';
+import CashierDashboard from './CashierDashboard';
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
@@ -111,6 +110,19 @@ const Dashboard = () => {
       // En cas d'erreur, garder les données par défaut
     }
   };
+
+  // Routing selon le rôle
+  if (user?.role === 'SUPER_ADMIN' && !selectedCompany) {
+    // Super Admin sans entreprise sélectionnée → Vue globale
+    return <SuperAdminDashboard />;
+  }
+
+  if (user?.role === 'CAISSIER') {
+    // Caissier → Dashboard spécifique
+    return <CashierDashboard />;
+  }
+
+  // Admin ou Super Admin avec entreprise sélectionnée → Dashboard Admin
 
   const StatCard = ({ title, value, icon: Icon, color }) => (
     <div className={`bg-white overflow-hidden shadow rounded-lg ${color}`}>

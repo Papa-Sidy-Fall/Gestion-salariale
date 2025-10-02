@@ -259,6 +259,8 @@ const Employees = () => {
     position: '',
     contractType: 'FIXE',
     rate: '',
+    dailyRate: '',
+    hourlyRate: '',
     bankDetails: '',
     companyId: user?.companyId || ''
   });
@@ -328,16 +330,47 @@ const Employees = () => {
       return;
     }
 
-    if (!validateAmount(formData.rate)) {
-      alert('Le salaire doit être un nombre positif valide');
+    // Validation selon le type de contrat
+    if (formData.contractType === 'FIXE' && !validateAmount(formData.rate)) {
+      alert('Le salaire mensuel doit être un nombre positif valide');
+      return;
+    }
+
+    if (formData.contractType === 'JOURNALIER' && !validateAmount(formData.dailyRate)) {
+      alert('Le taux journalier doit être un nombre positif valide');
+      return;
+    }
+
+    if (formData.contractType === 'HONORAIRE' && !validateAmount(formData.hourlyRate)) {
+      alert('Le taux horaire doit être un nombre positif valide');
       return;
     }
 
     try {
-      const data = {
+      let data = {
         ...formData,
-        rate: parseFloat(formData.rate)
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        position: formData.position,
+        contractType: formData.contractType,
+        bankDetails: formData.bankDetails,
+        companyId: formData.companyId
       };
+
+      // Ajouter les champs de salaire selon le type de contrat
+      if (formData.contractType === 'FIXE') {
+        data.rate = parseFloat(formData.rate);
+        data.dailyRate = null;
+        data.hourlyRate = null;
+      } else if (formData.contractType === 'JOURNALIER') {
+        data.rate = 0; // Pas utilisé pour journalier
+        data.dailyRate = parseFloat(formData.dailyRate);
+        data.hourlyRate = null;
+      } else if (formData.contractType === 'HONORAIRE') {
+        data.rate = 0; // Pas utilisé pour honoraire
+        data.dailyRate = null;
+        data.hourlyRate = parseFloat(formData.hourlyRate);
+      }
 
       console.log('Données envoyées:', data);
 
@@ -364,6 +397,8 @@ const Employees = () => {
       position: employee.position,
       contractType: employee.contractType,
       rate: employee.rate.toString(),
+      dailyRate: employee.dailyRate?.toString() || '',
+      hourlyRate: employee.hourlyRate?.toString() || '',
       bankDetails: employee.bankDetails || '',
       companyId: employee.companyId
     });
@@ -388,6 +423,8 @@ const Employees = () => {
       position: '',
       contractType: 'FIXE',
       rate: '',
+      dailyRate: '',
+      hourlyRate: '',
       bankDetails: '',
       companyId: user?.companyId || ''
     });
@@ -487,7 +524,11 @@ const Employees = () => {
                               {employee.firstName} {employee.lastName}
                             </div>
                             <div className="text-sm text-gray-500">
-                              {employee.position} • {employee.contractType} • {employee.rate.toLocaleString()} FCFA
+                              {employee.position} • {employee.contractType} • {
+                                employee.contractType === 'FIXE' ? `${employee.rate.toLocaleString()} FCFA/mois` :
+                                employee.contractType === 'JOURNALIER' ? `${employee.dailyRate?.toLocaleString() || 0} FCFA/jour` :
+                                `${employee.hourlyRate?.toLocaleString() || 0} FCFA/heure`
+                              }
                             </div>
                           </div>
                         </div>
@@ -616,7 +657,7 @@ const Employees = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-4">
                       <div className="space-y-2">
                         <label className="block text-sm font-semibold text-gray-800">
                           <ChevronDown className="inline h-4 w-4 mr-2" />
@@ -628,30 +669,73 @@ const Employees = () => {
                             value={formData.contractType}
                             onChange={(e) => setFormData({...formData, contractType: e.target.value})}
                           >
-                            <option value="FIXE">Fixe</option>
-                            <option value="JOURNALIER">Journalier</option>
-                            <option value="HONORAIRE">Honoraire</option>
+                            <option value="FIXE">Fixe (Salaire mensuel)</option>
+                            <option value="JOURNALIER">Journalier (Taux journalier)</option>
+                            <option value="HONORAIRE">Honoraire (Taux horaire)</option>
                           </select>
                           <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                             <ChevronDown className="w-5 h-5 text-gray-400" />
                           </div>
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <label className="block text-sm font-semibold text-gray-800">
-                          <CreditCard className="inline h-4 w-4 mr-2" />
-                          Salaire/Taux (FCFA) <span className="text-red-500">*</span>
-                        </label>
-                        <div className="relative">
-                          <input
-                            type="number"
-                            className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white"
-                            value={formData.rate}
-                            onChange={(e) => setFormData({...formData, rate: e.target.value})}
-                            placeholder="150000"
-                          />
+
+                      {/* Champs de salaire selon le type de contrat */}
+                      {formData.contractType === 'FIXE' && (
+                        <div className="space-y-2">
+                          <label className="block text-sm font-semibold text-gray-800">
+                            <CreditCard className="inline h-4 w-4 mr-2" />
+                            Salaire mensuel (FCFA) <span className="text-red-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                              value={formData.rate}
+                              onChange={(e) => setFormData({...formData, rate: e.target.value})}
+                              placeholder="150000"
+                            />
+                          </div>
+                          <p className="text-xs text-gray-500">Salaire fixe mensuel, indépendant des pointages</p>
                         </div>
-                      </div>
+                      )}
+
+                      {formData.contractType === 'JOURNALIER' && (
+                        <div className="space-y-2">
+                          <label className="block text-sm font-semibold text-gray-800">
+                            <CreditCard className="inline h-4 w-4 mr-2" />
+                            Taux journalier (FCFA) <span className="text-red-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                              value={formData.dailyRate}
+                              onChange={(e) => setFormData({...formData, dailyRate: e.target.value})}
+                              placeholder="25000"
+                            />
+                          </div>
+                          <p className="text-xs text-gray-500">Salaire = jours travaillés × taux journalier (nécessite pointages)</p>
+                        </div>
+                      )}
+
+                      {formData.contractType === 'HONORAIRE' && (
+                        <div className="space-y-2">
+                          <label className="block text-sm font-semibold text-gray-800">
+                            <CreditCard className="inline h-4 w-4 mr-2" />
+                            Taux horaire (FCFA) <span className="text-red-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="number"
+                              className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                              value={formData.hourlyRate}
+                              onChange={(e) => setFormData({...formData, hourlyRate: e.target.value})}
+                              placeholder="5000"
+                            />
+                          </div>
+                          <p className="text-xs text-gray-500">Salaire = heures travaillées × taux horaire (nécessite pointages)</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

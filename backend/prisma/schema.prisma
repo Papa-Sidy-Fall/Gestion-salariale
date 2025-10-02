@@ -42,6 +42,13 @@ enum PaymentMethod {
   WAVE
 }
 
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  CONGE
+  MALADIE
+}
+
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
@@ -78,12 +85,15 @@ model Employee {
   lastName     String
   position     String
   contractType ContractType
-  rate         Float
+  rate         Float        // Salaire mensuel pour FIXE
+  dailyRate    Float?       // Taux journalier pour JOURNALIER
+  hourlyRate   Float?       // Taux horaire pour HONORAIRE
   bankDetails  String?
   isActive     Boolean      @default(true)
   companyId    String
   company      Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
   payslips     Payslip[]
+  attendances  Attendance[]
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
@@ -132,4 +142,22 @@ model Payment {
   updatedAt  DateTime      @updatedAt
 
   @@map("payments")
+}
+
+model Attendance {
+  id          String           @id @default(cuid())
+  employeeId  String
+  employee    Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date        DateTime         @db.Date
+  checkIn     DateTime?
+  checkOut    DateTime?
+  hoursWorked Float?           @default(0)
+  status      AttendanceStatus @default(PRESENT)
+  notes       String?          @db.Text
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@map("attendances")
+  @@index([employeeId, date])
+  @@unique([employeeId, date])
 }
