@@ -6,8 +6,9 @@ export class PDFService {
     payslip: any;
     employee: any;
     company: any;
+    cashier?: any; // Informations du caissier
   }) {
-    const { payment, payslip, employee, company } = paymentData;
+    const { payment, payslip, employee, company, cashier } = paymentData;
 
     const htmlContent = `
       <!DOCTYPE html>
@@ -15,165 +16,222 @@ export class PDFService {
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Facture de paiement</title>
+        <title>Reçu de paiement</title>
         <style>
           body {
             font-family: 'Arial', sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 10px;
             color: #333;
-            background-color: #f8f9fa;
+            background: white;
+            font-size: 14px;
+            line-height: 1.3;
           }
           .container {
-            max-width: 800px;
+            max-width: 100%;
             margin: 0 auto;
             background: white;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            position: relative;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
           }
           .header {
             text-align: center;
-            border-bottom: 3px solid ${company.color || '#6FA4AF'};
-            padding-bottom: 20px;
-            margin-bottom: 30px;
-          }
-          .company-logo {
-            max-width: 150px;
-            height: auto;
+            border-bottom: 2px solid ${company.color || '#6FA4AF'};
+            padding-bottom: 10px;
             margin-bottom: 15px;
           }
+          .company-logo {
+            max-width: 120px;
+            height: auto;
+            margin-bottom: 8px;
+          }
           .company-name {
-            font-size: 28px;
-            font-weight: bold;
-            color: ${company.color || '#6FA4AF'};
-            margin: 10px 0;
-          }
-          .invoice-title {
             font-size: 24px;
-            color: #666;
-            margin: 10px 0;
-          }
-          .invoice-number {
-            font-size: 18px;
             font-weight: bold;
             color: ${company.color || '#6FA4AF'};
-            margin: 10px 0;
+            margin: 3px 0;
           }
-          .info-section {
+          .receipt-title {
+            font-size: 18px;
+            color: #666;
+            margin: 3px 0;
+            font-weight: bold;
+          }
+          .receipt-number {
+            font-size: 16px;
+            font-weight: bold;
+            color: ${company.color || '#6FA4AF'};
+            margin: 3px 0;
+          }
+          .main-content {
+            flex: 1;
             display: flex;
-            justify-content: space-between;
-            margin: 30px 0;
+            gap: 15px;
+            margin-bottom: 15px;
           }
-          .info-block {
+          .left-section, .right-section {
             flex: 1;
           }
-          .info-block h3 {
-            font-size: 16px;
+          .section-title {
+            font-size: 15px;
             color: ${company.color || '#6FA4AF'};
-            margin-bottom: 10px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 5px;
-          }
-          .info-block p {
-            margin: 5px 0;
-            line-height: 1.5;
-          }
-          .payment-details {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 30px 0;
-            border-left: 4px solid ${company.color || '#6FA4AF'};
-          }
-          .amount {
-            font-size: 32px;
             font-weight: bold;
-            color: ${company.color || '#6FA4AF'};
+            margin-bottom: 6px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 2px;
+          }
+          .info-row {
+            margin: 2px 0;
+            display: flex;
+          }
+          .info-label {
+            font-weight: bold;
+            min-width: 90px;
+          }
+          .info-value {
+            flex: 1;
+          }
+          .payment-summary {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 6px;
+            margin: 12px 0;
+            border-left: 3px solid ${company.color || '#6FA4AF'};
+          }
+          .final-amount {
+            position: fixed;
+            bottom: 100px;
+            left: 15px;
+            right: 15px;
+            background: ${company.color || '#6FA4AF'};
+            color: white;
+            padding: 18px;
             text-align: center;
-            margin: 20px 0;
-            padding: 15px;
-            background: #f0f8ff;
+            font-size: 28px;
+            font-weight: bold;
             border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
           }
-          .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
+          .signatures {
+            position: fixed;
+            bottom: 15px;
+            left: 15px;
+            right: 15px;
+            display: flex;
+            justify-content: space-between;
+          }
+          .signature-box {
+            flex: 1;
             text-align: center;
-            color: #666;
-            font-size: 12px;
-          }
-          .signature {
-            margin-top: 40px;
-            text-align: right;
+            margin: 0 8px;
           }
           .signature-line {
             border-top: 1px solid #333;
-            width: 200px;
-            margin-left: auto;
-            margin-top: 50px;
-            padding-top: 10px;
+            margin-top: 30px;
+            padding-top: 3px;
+            font-size: 12px;
+            font-weight: bold;
+          }
+          .cashier-info {
+            background: #e8f4f8;
+            padding: 6px;
+            border-radius: 4px;
+            margin: 8px 0;
+            font-size: 13px;
+          }
+          .footer {
+            position: fixed;
+            bottom: 3px;
+            left: 15px;
+            right: 15px;
             text-align: center;
-            font-size: 14px;
+            color: #666;
+            font-size: 10px;
+            border-top: 1px solid #eee;
+            padding-top: 3px;
           }
         </style>
       </head>
       <body>
         <div class="container">
+          <!-- Header -->
           <div class="header">
             ${company.logo ? `<img src="${company.logo}" alt="${company.name}" class="company-logo">` : ''}
             <div class="company-name">${company.name}</div>
-            <div class="invoice-title">FACTURE DE PAIEMENT</div>
-            <div class="invoice-number">N° ${payment.id.slice(-8).toUpperCase()}</div>
+            <div class="receipt-title">REÇU DE PAIEMENT</div>
+            <div class="receipt-number">N° ${payment.id.slice(-8).toUpperCase()}</div>
           </div>
 
-          <div class="info-section">
-            <div class="info-block">
-              <h3>Informations de l'entreprise</h3>
-              <p><strong>${company.name}</strong></p>
-              ${company.address ? `<p>${company.address}</p>` : ''}
-              ${company.phone ? `<p>Tél: ${company.phone}</p>` : ''}
-              ${company.email ? `<p>Email: ${company.email}</p>` : ''}
+          <!-- Main Content -->
+          <div class="main-content">
+            <!-- Left Section -->
+            <div class="left-section">
+              <div class="section-title">INFORMATIONS EMPLOYEUR</div>
+              <div class="info-row"><span class="info-label">Entreprise:</span><span class="info-value">${company.name}</span></div>
+              ${company.address ? `<div class="info-row"><span class="info-label">Adresse:</span><span class="info-value">${company.address}</span></div>` : ''}
+              ${company.phone ? `<div class="info-row"><span class="info-label">Téléphone:</span><span class="info-value">${company.phone}</span></div>` : ''}
+              ${company.email ? `<div class="info-row"><span class="info-label">Email:</span><span class="info-value">${company.email}</span></div>` : ''}
+
+              <div class="section-title" style="margin-top: 15px;">INFORMATIONS EMPLOYE</div>
+              <div class="info-row"><span class="info-label">Nom:</span><span class="info-value">${employee.firstName} ${employee.lastName}</span></div>
+              <div class="info-row"><span class="info-label">Poste:</span><span class="info-value">${employee.position}</span></div>
+              <div class="info-row"><span class="info-label">Contrat:</span><span class="info-value">${employee.contractType}</span></div>
             </div>
 
-            <div class="info-block">
-              <h3>Informations de l'employé</h3>
-              <p><strong>${employee.firstName} ${employee.lastName}</strong></p>
-              <p>Poste: ${employee.position}</p>
-              <p>Contrat: ${employee.contractType}</p>
+            <!-- Right Section -->
+            <div class="right-section">
+              <div class="section-title">DÉTAILS DU PAIEMENT</div>
+              <div class="info-row"><span class="info-label">Date:</span><span class="info-value">${new Date(payment.date).toLocaleDateString('fr-FR')}</span></div>
+              <div class="info-row"><span class="info-label">Période:</span><span class="info-value">${payslip.payRun?.period || 'N/A'}</span></div>
+              <div class="info-row"><span class="info-label">Méthode:</span><span class="info-value">${this.getPaymentMethodText(payment.method)}</span></div>
+              <div class="info-row"><span class="info-label">Référence:</span><span class="info-value">${payment.id.slice(-8)}</span></div>
+
+              <!-- Cashier Info -->
+              ${cashier ? `
+              <div class="cashier-info">
+                <div class="section-title" style="margin-bottom: 3px;">CAISSIER</div>
+                <div class="info-row" style="margin: 1px 0;"><span class="info-label" style="min-width: 70px;">Nom:</span><span class="info-value">${cashier.email.split('@')[0]}</span></div>
+                <div class="info-row" style="margin: 1px 0;"><span class="info-label" style="min-width: 70px;">Email:</span><span class="info-value">${cashier.email}</span></div>
+              </div>
+              ` : ''}
+
+              <!-- Payment Summary -->
+              <div class="payment-summary">
+                <div class="section-title" style="margin-bottom: 8px;">RÉCAPITULATIF</div>
+                <div class="info-row"><span class="info-label">Salaire brut:</span><span class="info-value">${payslip.gross.toLocaleString('fr-FR')} FCFA</span></div>
+                <div class="info-row"><span class="info-label">Déductions:</span><span class="info-value">${payslip.deductions.toLocaleString('fr-FR')} FCFA</span></div>
+                <div class="info-row" style="font-weight: bold; border-top: 1px solid #ddd; padding-top: 3px; margin-top: 3px;"><span class="info-label">Net à payer:</span><span class="info-value">${payslip.net.toLocaleString('fr-FR')} FCFA</span></div>
+                <div class="info-row" style="font-weight: bold; color: ${company.color || '#6FA4AF'};"><span class="info-label">Montant payé:</span><span class="info-value">${payment.amount.toLocaleString('fr-FR')} FCFA</span></div>
+              </div>
             </div>
           </div>
 
-          <div class="payment-details">
-            <h3>Détails du paiement</h3>
-            <p><strong>Date:</strong> ${new Date(payment.date).toLocaleDateString('fr-FR')}</p>
-            <p><strong>Période:</strong> ${payslip.payRun?.period || 'N/A'}</p>
-            <p><strong>Méthode:</strong> ${this.getPaymentMethodText(payment.method)}</p>
-            <p><strong>Référence:</strong> ${payment.id}</p>
+          <!-- Final Amount (Fixed at bottom) -->
+          <div class="final-amount">
+            MONTANT PAYÉ: ${payment.amount.toLocaleString('fr-FR')} FCFA
           </div>
 
-          <div class="amount">
-            ${payment.amount.toLocaleString('fr-FR')} FCFA
-          </div>
-
-          <div class="payment-details">
-            <h3>Récapitulatif du bulletin</h3>
-            <p><strong>Salaire brut:</strong> ${payslip.gross.toLocaleString('fr-FR')} FCFA</p>
-            <p><strong>Déductions:</strong> ${payslip.deductions.toLocaleString('fr-FR')} FCFA</p>
-            <p><strong>Net à payer:</strong> ${payslip.net.toLocaleString('fr-FR')} FCFA</p>
-            <p><strong>Montant payé:</strong> ${payment.amount.toLocaleString('fr-FR')} FCFA</p>
-          </div>
-
-          <div class="signature">
-            <div class="signature-line">
-              Signature du caissier
+          <!-- Signatures -->
+          <div class="signatures">
+            <div class="signature-box">
+              <div class="signature-line">
+                Signature de l'entreprise
+              </div>
+            </div>
+            <div class="signature-box">
+              <div class="signature-line">
+                Signature du bénéficiaire<br/>
+                (reçu de paiement)
+              </div>
             </div>
           </div>
 
+          <!-- Footer -->
           <div class="footer">
-            <p>Ce document est généré automatiquement par le système de gestion des salaires.</p>
-            <p>Date de génération: ${new Date().toLocaleDateString('fr-FR')}</p>
+            Généré le ${new Date().toLocaleDateString('fr-FR')}
           </div>
         </div>
       </body>
@@ -193,11 +251,14 @@ export class PDFService {
         format: 'A4',
         printBackground: true,
         margin: {
-          top: '20px',
-          right: '20px',
-          bottom: '20px',
-          left: '20px'
-        }
+          top: '5px',
+          right: '10px',
+          bottom: '70px', // Espace pour les signatures en bas
+          left: '10px'
+        },
+        preferCSSPageSize: true,
+        displayHeaderFooter: false,
+        pageRanges: '1' // Forcer une seule page
       });
 
       await browser.close();

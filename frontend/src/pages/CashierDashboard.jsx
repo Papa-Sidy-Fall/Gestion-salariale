@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { DollarSign, Clock, CheckCircle, AlertCircle, FileText, CreditCard, Calculator } from 'lucide-react';
+import { DollarSign, Clock, CheckCircle, AlertCircle, FileText, CreditCard, Calculator, Eye, User, Briefcase } from 'lucide-react';
 
 const CashierDashboard = () => {
   const { user, logout } = useAuth();
@@ -22,8 +22,10 @@ const CashierDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showManualEntryModal, setShowManualEntryModal] = useState(false);
+  const [showEmployeeDetailsModal, setShowEmployeeDetailsModal] = useState(false);
   const [selectedPayslip, setSelectedPayslip] = useState(null);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [employeeDetails, setEmployeeDetails] = useState(null);
   const [paymentData, setPaymentData] = useState({
     amount: '',
     method: 'ESPECES'
@@ -279,6 +281,11 @@ const CashierDashboard = () => {
       employeeId: employee.id
     });
     setShowManualEntryModal(true);
+  };
+
+  const showEmployeeDetails = (employee) => {
+    setEmployeeDetails(employee);
+    setShowEmployeeDetailsModal(true);
   };
 
   const payJournalierEmployee = async (employee) => {
@@ -554,13 +561,22 @@ const CashierDashboard = () => {
                           {employee.position} • {employee.hourlyRate} FCFA/h
                         </p>
                       </div>
-                      <button
-                        onClick={() => openManualEntryModal(employee)}
-                        className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center"
-                      >
-                        <Calculator className="h-4 w-4 mr-1" />
-                        Saisir Heures
-                      </button>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => openManualEntryModal(employee)}
+                          className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                        >
+                          <Calculator className="h-4 w-4 mr-1" />
+                          Saisir Heures
+                        </button>
+                        <button
+                          onClick={() => showEmployeeDetails(employee)}
+                          className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                        >
+                          <Eye className="h-4 w-4 mr-1" />
+                          Détails
+                        </button>
+                      </div>
                     </div>
                   </li>
                 ))}
@@ -612,18 +628,27 @@ const CashierDashboard = () => {
                             )}
                           </div>
                         </div>
-                        <button
-                          onClick={() => payJournalierEmployee(employee)}
-                          disabled={!canPay}
-                          className={`px-4 py-2 rounded-md text-sm font-medium flex items-center ${
-                            canPay
-                              ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                          }`}
-                        >
-                          <DollarSign className="h-4 w-4 mr-1" />
-                          {canPay ? 'Payer Maintenant' : 'Non Disponible'}
-                        </button>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => payJournalierEmployee(employee)}
+                            disabled={!canPay}
+                            className={`px-3 py-2 rounded-md text-sm font-medium flex items-center ${
+                              canPay
+                                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                            }`}
+                          >
+                            <DollarSign className="h-4 w-4 mr-1" />
+                            {canPay ? 'Payer' : 'Non Dispo'}
+                          </button>
+                          <button
+                            onClick={() => showEmployeeDetails(employee)}
+                            className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            Détails
+                          </button>
+                        </div>
                       </div>
                     </li>
                   );
@@ -913,6 +938,151 @@ const CashierDashboard = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Détails Employé */}
+      {showEmployeeDetailsModal && employeeDetails && (
+        <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl transform transition-all max-h-[90vh] overflow-hidden">
+            {/* Header avec fond uni */}
+            <div className="bg-indigo-600 px-6 py-4 rounded-t-2xl">
+              <h3 className="text-xl font-bold text-white flex items-center">
+                <Eye className="h-6 w-6 mr-2" />
+                Détails de l'employé
+              </h3>
+              <p className="text-indigo-100 text-sm mt-1">
+                Informations complètes sur {employeeDetails.firstName} {employeeDetails.lastName}
+              </p>
+            </div>
+
+            <div className="px-6 py-4 max-h-[calc(90vh-120px)] overflow-y-auto">
+              {/* Informations personnelles */}
+              <div className="bg-white rounded-xl p-4 mb-4">
+                <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                  <User className="h-5 w-5 mr-2" />
+                  Informations personnelles
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-800">Prénom</label>
+                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{employeeDetails.firstName}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-800">Nom</label>
+                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{employeeDetails.lastName}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Informations professionnelles */}
+              <div className="bg-white rounded-xl p-4 mb-4">
+                <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                  <Briefcase className="h-5 w-5 mr-2" />
+                  Informations professionnelles
+                </h4>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-800">Poste</label>
+                      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">{employeeDetails.position}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-800">Type de contrat</label>
+                      <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                        {employeeDetails.contractType === 'FIXE' && 'Fixe (Salaire mensuel)'}
+                        {employeeDetails.contractType === 'JOURNALIER' && 'Journalier (Taux journalier)'}
+                        {employeeDetails.contractType === 'HONORAIRE' && 'Honoraire (Taux horaire)'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Champs de salaire selon le type de contrat */}
+                  {employeeDetails.contractType === 'FIXE' && (
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-800">Salaire mensuel</label>
+                      <p className="text-gray-900 bg-green-50 px-3 py-2 rounded-lg font-medium">
+                        {employeeDetails.rate?.toLocaleString()} FCFA/mois
+                      </p>
+                    </div>
+                  )}
+
+                  {employeeDetails.contractType === 'JOURNALIER' && (
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-800">Taux journalier</label>
+                      <p className="text-gray-900 bg-blue-50 px-3 py-2 rounded-lg font-medium">
+                        {employeeDetails.dailyRate?.toLocaleString()} FCFA/jour
+                      </p>
+                    </div>
+                  )}
+
+                  {employeeDetails.contractType === 'HONORAIRE' && (
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-800">Taux horaire</label>
+                      <p className="text-gray-900 bg-purple-50 px-3 py-2 rounded-lg font-medium">
+                        {employeeDetails.hourlyRate?.toLocaleString()} FCFA/heure
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Informations bancaires */}
+              {employeeDetails.bankDetails && (
+                <div className="bg-white rounded-xl p-4 mb-4">
+                  <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <CreditCard className="h-5 w-5 mr-2" />
+                    Coordonnées bancaires
+                  </h4>
+                  <div className="space-y-2">
+                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg whitespace-pre-line">
+                      {employeeDetails.bankDetails}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Statut et dates */}
+              <div className="bg-white rounded-xl p-4">
+                <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                  <CheckCircle className="h-5 w-5 mr-2" />
+                  Statut et informations système
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-800">Statut</label>
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                      employeeDetails.isActive
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {employeeDetails.isActive ? 'Actif' : 'Inactif'}
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="block text-sm font-semibold text-gray-800">Date de création</label>
+                    <p className="text-gray-900 bg-gray-50 px-3 py-2 rounded-lg">
+                      {new Date(employeeDetails.createdAt).toLocaleDateString('fr-FR')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Boutons */}
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 mt-6">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEmployeeDetailsModal(false);
+                    setEmployeeDetails(null);
+                  }}
+                  className="px-6 py-3 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-200 transform hover:scale-105"
+                >
+                  Fermer
+                </button>
+              </div>
             </div>
           </div>
         </div>

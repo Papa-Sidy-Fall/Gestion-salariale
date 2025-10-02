@@ -100,12 +100,13 @@ export class PaymentController {
         return res.status(404).json({ error: 'Paiement non trouvé' });
       }
 
-      // Générer le PDF
+      // Générer le PDF avec les informations du caissier
       const pdfBuffer = await PDFService.generateInvoicePDF({
         payment,
         payslip: payment.payslip,
         employee: payment.payslip.employee,
-        company: payment.payslip.employee.company
+        company: payment.payslip.employee.company,
+        cashier: req.user // Informations du caissier connecté
       });
 
       // Définir les headers pour le téléchargement
