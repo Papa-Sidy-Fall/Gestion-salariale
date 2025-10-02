@@ -546,68 +546,108 @@ const CashierDashboard = () => {
 
       {/* Modal de Paiement */}
       {showPaymentModal && selectedPayslip && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
+        <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl transform transition-all max-h-[90vh] overflow-hidden">
+            {/* Header avec fond uni */}
+            <div className="bg-green-600 px-6 py-4 rounded-t-2xl">
+              <h3 className="text-xl font-bold text-white flex items-center">
+                <DollarSign className="h-6 w-6 mr-2" />
                 Enregistrer un Paiement
               </h3>
-              <div className="mb-4 bg-gray-50 p-4 rounded-md">
-                <p className="text-sm text-gray-600">
-                  <strong>Employé:</strong> {selectedPayslip.employee.firstName} {selectedPayslip.employee.lastName}
-                </p>
-                <p className="text-sm text-gray-600">
-                  <strong>Période:</strong> {selectedPayslip.payRunPeriod}
-                </p>
-                <p className="text-sm text-gray-600">
-                  <strong>Net à payer:</strong> {selectedPayslip.net.toLocaleString()} FCFA
-                </p>
-                <p className="text-sm font-medium text-orange-600">
-                  <strong>Restant:</strong> {selectedPayslip.remainingAmount.toLocaleString()} FCFA
-                </p>
+              <p className="text-green-100 text-sm mt-1">
+                Effectuez un paiement pour ce bulletin de salaire
+              </p>
+            </div>
+
+            <div className="px-6 py-4 max-h-[calc(90vh-120px)] overflow-y-auto">
+              {/* Informations du bulletin */}
+              <div className="bg-white rounded-xl p-4 mb-4">
+                <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                  <FileText className="h-5 w-5 mr-2" />
+                  Détails du bulletin
+                </h4>
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-600">
+                    <strong>Employé:</strong> {selectedPayslip.employee.firstName} {selectedPayslip.employee.lastName}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    <strong>Période:</strong> {selectedPayslip.payRunPeriod}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    <strong>Net à payer:</strong> {selectedPayslip.net.toLocaleString()} FCFA
+                  </p>
+                  <p className="text-sm font-medium text-orange-600">
+                    <strong>Restant:</strong> {selectedPayslip.remainingAmount.toLocaleString()} FCFA
+                  </p>
+                </div>
               </div>
+
               <form onSubmit={handlePaymentSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Montant *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                    value={paymentData.amount}
-                    onChange={(e) => setPaymentData({...paymentData, amount: e.target.value})}
-                    required
-                  />
+                {/* Section paiement */}
+                <div className="bg-white rounded-xl p-4">
+                  <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <CreditCard className="h-5 w-5 mr-2" />
+                    Informations du paiement
+                  </h4>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-800">
+                        Montant à payer <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          step="0.01"
+                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-4 focus:ring-green-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                          value={paymentData.amount}
+                          onChange={(e) => setPaymentData({...paymentData, amount: e.target.value})}
+                          placeholder="Montant en FCFA"
+                          required
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500">Maximum: {selectedPayslip.remainingAmount.toLocaleString()} FCFA</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-800">
+                        Mode de paiement <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <select
+                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-4 focus:ring-green-100 transition-all duration-200 bg-gray-50 focus:bg-white appearance-none"
+                          value={paymentData.method}
+                          onChange={(e) => setPaymentData({...paymentData, method: e.target.value})}
+                          required
+                        >
+                          <option value="ESPECES">💵 Espèces</option>
+                          <option value="VIREMENT">🏦 Virement bancaire</option>
+                          <option value="ORANGE_MONEY">📱 Orange Money</option>
+                          <option value="WAVE">💳 Wave</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Mode de paiement *</label>
-                  <select
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                    value={paymentData.method}
-                    onChange={(e) => setPaymentData({...paymentData, method: e.target.value})}
-                    required
-                  >
-                    <option value="ESPECES">Espèces</option>
-                    <option value="VIREMENT">Virement bancaire</option>
-                    <option value="ORANGE_MONEY">Orange Money</option>
-                    <option value="WAVE">Wave</option>
-                  </select>
-                </div>
-                <div className="flex justify-end space-x-3 pt-4">
+
+                {/* Boutons */}
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
                   <button
                     type="button"
                     onClick={() => {
                       setShowPaymentModal(false);
                       setSelectedPayslip(null);
                     }}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
+                    className="px-6 py-3 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-200 transform hover:scale-105"
                   >
-                    Annuler
+                    ❌ Annuler
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700"
+                    className="px-6 py-3 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
                   >
-                    Enregistrer le Paiement
+                    <DollarSign className="h-5 w-5 mr-2" />
+                    Enregistrer le paiement
                   </button>
                 </div>
               </form>
@@ -618,75 +658,121 @@ const CashierDashboard = () => {
 
       {/* Modal Saisie Manuelle des Heures */}
       {showManualEntryModal && selectedEmployee && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-                <Calculator className="h-6 w-6 mr-2 text-purple-600" />
+        <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl transform transition-all max-h-[90vh] overflow-hidden">
+            {/* Header avec fond uni */}
+            <div className="bg-purple-600 px-6 py-4 rounded-t-2xl">
+              <h3 className="text-xl font-bold text-white flex items-center">
+                <Calculator className="h-6 w-6 mr-2" />
                 Saisie Manuelle des Heures
               </h3>
-              <div className="mb-4 bg-gray-50 p-4 rounded-md">
-                <p className="text-sm text-gray-600">
-                  <strong>Employé:</strong> {selectedEmployee.firstName} {selectedEmployee.lastName}
-                </p>
-                <p className="text-sm text-gray-600">
-                  <strong>Taux horaire:</strong> {selectedEmployee.hourlyRate} FCFA/h
-                </p>
-                {manualEntryData.checkIn && manualEntryData.checkOut && (
-                  <div className="mt-2 p-2 bg-purple-50 rounded">
-                    <p className="text-sm font-medium text-purple-800">
-                      Heures travaillées: {calculatedHours.toFixed(1)}h
-                    </p>
-                    <p className="text-sm font-medium text-purple-800">
-                      Montant estimé: {calculatedAmount.toLocaleString()} FCFA
-                    </p>
-                  </div>
-                )}
+              <p className="text-purple-100 text-sm mt-1">
+                Enregistrez les heures travaillées pour calculer le salaire
+              </p>
+            </div>
+
+            <div className="px-6 py-4 max-h-[calc(90vh-120px)] overflow-y-auto">
+              {/* Informations de l'employé */}
+              <div className="bg-white rounded-xl p-4 mb-4">
+                <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                  <Calculator className="h-5 w-5 mr-2" />
+                  Informations de l'employé
+                </h4>
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-600">
+                    <strong>Employé:</strong> {selectedEmployee.firstName} {selectedEmployee.lastName}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    <strong>Taux horaire:</strong> {selectedEmployee.hourlyRate} FCFA/h
+                  </p>
+                  {manualEntryData.checkIn && manualEntryData.checkOut && (
+                    <div className="mt-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                      <p className="text-sm font-medium text-purple-800">
+                        🕒 Heures travaillées: {calculatedHours.toFixed(1)}h
+                      </p>
+                      <p className="text-sm font-medium text-purple-800">
+                        💰 Montant estimé: {calculatedAmount.toLocaleString()} FCFA
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
+
               <form onSubmit={handleManualEntry} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Date *</label>
-                  <input
-                    type="date"
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                    value={manualEntryData.date}
-                    onChange={(e) => setManualEntryData({...manualEntryData, date: e.target.value})}
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Heure arrivée *</label>
-                    <input
-                      type="time"
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                      value={manualEntryData.checkIn}
-                      onChange={(e) => setManualEntryData({...manualEntryData, checkIn: e.target.value})}
-                      required
-                    />
+                {/* Section saisie des heures */}
+                <div className="bg-white rounded-xl p-4">
+                  <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <Clock className="h-5 w-5 mr-2" />
+                    Saisie des heures
+                  </h4>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-800">
+                        Date de travail <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="date"
+                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                          value={manualEntryData.date}
+                          onChange={(e) => setManualEntryData({...manualEntryData, date: e.target.value})}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-800">
+                          Heure d'arrivée <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="time"
+                            className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                            value={manualEntryData.checkIn}
+                            onChange={(e) => setManualEntryData({...manualEntryData, checkIn: e.target.value})}
+                            required
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-800">
+                          Heure de départ <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="time"
+                            className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                            value={manualEntryData.checkOut}
+                            onChange={(e) => setManualEntryData({...manualEntryData, checkOut: e.target.value})}
+                            required
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-800">
+                        Notes (optionnel)
+                      </label>
+                      <div className="relative">
+                        <textarea
+                          rows="2"
+                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-200 bg-gray-50 focus:bg-white resize-none"
+                          value={manualEntryData.notes}
+                          onChange={(e) => setManualEntryData({...manualEntryData, notes: e.target.value})}
+                          placeholder="Ajouter des notes sur cette journée..."
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Heure départ *</label>
-                    <input
-                      type="time"
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                      value={manualEntryData.checkOut}
-                      onChange={(e) => setManualEntryData({...manualEntryData, checkOut: e.target.value})}
-                      required
-                    />
-                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Notes</label>
-                  <textarea
-                    rows="2"
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                    value={manualEntryData.notes}
-                    onChange={(e) => setManualEntryData({...manualEntryData, notes: e.target.value})}
-                    placeholder="Notes optionnelles..."
-                  />
-                </div>
-                <div className="flex justify-end space-x-3 pt-4">
+
+                {/* Boutons */}
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
                   <button
                     type="button"
                     onClick={() => {
@@ -694,15 +780,16 @@ const CashierDashboard = () => {
                       setSelectedEmployee(null);
                       resetManualEntryForm();
                     }}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
+                    className="px-6 py-3 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-200 transform hover:scale-105"
                   >
-                    Annuler
+                    ❌ Annuler
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md hover:bg-purple-700"
+                    className="px-6 py-3 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
                   >
-                    Enregistrer les Heures
+                    <Calculator className="h-5 w-5 mr-2" />
+                    Enregistrer les heures
                   </button>
                 </div>
               </form>

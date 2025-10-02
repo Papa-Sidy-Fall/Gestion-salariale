@@ -308,35 +308,65 @@ const PayRuns = () => {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
+        <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl transform transition-all max-h-[90vh] overflow-hidden">
+            {/* Header avec fond uni */}
+            <div className="bg-indigo-600 px-6 py-4 rounded-t-2xl">
+              <h3 className="text-xl font-bold text-white flex items-center">
+                <Calendar className="h-6 w-6 mr-2" />
                 Créer un nouveau cycle de paie
               </h3>
+              <p className="text-indigo-100 text-sm mt-1">
+                Définissez la période pour générer les bulletins de salaire
+              </p>
+            </div>
+
+            <div className="px-6 py-4 max-h-[calc(90vh-120px)] overflow-y-auto">
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Période (YYYY-MM)</label>
-                  <input
-                    type="month"
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
-                    value={formData.period}
-                    onChange={(e) => setFormData({...formData, period: e.target.value})}
-                  />
+                {/* Section principale */}
+                <div className="bg-white rounded-xl p-4">
+                  <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                    <Calendar className="h-5 w-5 mr-2" />
+                    Configuration du cycle
+                  </h4>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-semibold text-gray-800">
+                        Période (YYYY-MM) <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="month"
+                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                          value={formData.period}
+                          onChange={(e) => setFormData({...formData, period: e.target.value})}
+                          required
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500">Sélectionnez le mois pour lequel vous souhaitez créer les bulletins</p>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex justify-end space-x-3 pt-4">
+
+                {/* Boutons */}
+                <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
                   <button
                     type="button"
-                    onClick={() => setShowModal(false)}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200"
+                    onClick={() => {
+                      setShowModal(false);
+                      resetForm();
+                    }}
+                    className="px-6 py-3 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-200 transform hover:scale-105"
                   >
-                    Annuler
+                    ❌ Annuler
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700"
+                    className="px-6 py-3 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
                   >
-                    Créer
+                    <Calendar className="h-5 w-5 mr-2" />
+                    Créer le cycle
                   </button>
                 </div>
               </form>
