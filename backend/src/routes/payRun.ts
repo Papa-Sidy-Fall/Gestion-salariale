@@ -28,4 +28,7 @@ router.post('/:id/close', authenticateToken, authorizeRoles(UserRole.SUPER_ADMIN
 // Routes par entreprise
 router.get('/company/:companyId', authenticateToken, authorizeCompanyAccess, PayRunController.getPayRunsByCompany);
 
+// Paiement journalier immédiat
+router.post('/pay-journalier/:employeeId', authenticateToken, authorizeRoles(UserRole.SUPER_ADMIN, UserRole.CAISSIER), PayRunController.payJournalierEmployee);
+
 export default router;

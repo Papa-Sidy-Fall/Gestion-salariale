@@ -402,4 +402,112 @@ export class PayRunService {
 
     return payRuns;
   }
+
+  static async payJournalierEmployee(employeeId: string, companyId: string) {
+    // Vérifier que l'employé existe et est journalier
+    const employee = await prisma.employee.findUnique({
+      where: { id: employeeId },
+      include: { company: true }
+    });
+
+    if (!employee) {
+      throw new Error('Employé non trouvé');
+    }
+
+    if (employee.contractType !== 'JOURNALIER') {
+      throw new Error('Cette fonction est réservée aux employés journaliers');
+    }
+
+    if (employee.companyId !== companyId) {
+      throw new Error('Employé non autorisé pour cette entreprise');
+    }
+
+    // Vérifier le pointage du jour
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const attendance = await prisma.attendance.findUnique({
+      where: {
+        employeeId_date: {
+          employeeId,
+          date: today
+        }
+      }
+    });
+
+    if (!attendance || !attendance.checkOut) {
+      throw new Error('L\'employé n\'a pas encore pointé son départ aujourd\'hui');
+    }
+
+    if (attendance.status !== 'PRESENT') {
+      throw new Error('L\'employé n\'est pas marqué comme présent aujourd\'hui');
+    }
+
+    // Créer un cycle de paie spécial pour ce paiement journalier
+    const period = `DAILY-${today.toISOString().split('T')[0]}`;
+    const payRun = await prisma.payRun.create({
+      data: {
+        period,
+        companyId,
+        status: 'BROUILLON'
+      }
+    });
+
+    // Calculer le salaire journalier
+    const grossSalary = employee.dailyRate || 0;
+    const deductions = grossSalary * 0.05; // 5% de déductions
+    const netSalary = grossSalary - deductions;
+
+    // Créer le bulletin
+    const payslip = await prisma.payslip.create({
+      data: {
+        employeeId,
+        payRunId: payRun.id,
+        gross: grossSalary,
+        deductions,
+        net: netSalary,
+        status: 'EN_ATTENTE'
+      }
+    });
+
+    // Vérifier le budget
+    if (netSalary > employee.company.budget) {
+      throw new Error(`Budget insuffisant. Montant demandé: ${netSalary} FCFA, Budget disponible: ${employee.company.budget} FCFA`);
+    }
+
+    // Déduire du budget
+    const newBudget = employee.company.budget - netSalary;
+    await prisma.company.update({
+      where: { id: companyId },
+      data: { budget: newBudget }
+    });
+
+    // Générer le paiement
+    const payment = await prisma.payment.create({
+      data: {
+        payslipId: payslip.id,
+        amount: netSalary,
+        method: 'ESPECES'
+      }
+    });
+
+    // Marquer le bulletin comme payé
+    await prisma.payslip.update({
+      where: { id: payslip.id },
+      data: { status: 'PAYE' }
+    });
+
+    // Approuver et clôturer immédiatement le cycle
+    await prisma.payRun.update({
+      where: { id: payRun.id },
+      data: { status: 'CLOTURE' }
+    });
+
+    return {
+      payRun,
+      payslip,
+      payment,
+      amount: netSalary
+    };
+  }
 }

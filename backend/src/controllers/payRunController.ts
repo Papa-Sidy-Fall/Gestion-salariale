@@ -155,4 +155,27 @@ export class PayRunController {
       res.status(500).json({ error: error.message });
     }
   }
+
+  static async payJournalierEmployee(req: AuthRequest, res: Response) {
+    try {
+      const { employeeId } = req.params;
+      if (!employeeId) {
+        return res.status(400).json({ error: 'ID employé requis' });
+      }
+
+      const companyId = req.user?.role === 'SUPER_ADMIN' ? req.body.companyId : req.user?.companyId;
+      if (!companyId) {
+        return res.status(400).json({ error: 'ID entreprise requis' });
+      }
+
+      const result = await PayRunService.payJournalierEmployee(employeeId, companyId);
+
+      res.json({
+        message: 'Paiement journalier effectué avec succès',
+        result
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  }
 }

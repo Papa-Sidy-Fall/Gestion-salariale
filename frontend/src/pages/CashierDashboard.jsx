@@ -10,6 +10,8 @@ const CashierDashboard = () => {
   const [pendingPayslips, setPendingPayslips] = useState([]);
   const [todayPayments, setTodayPayments] = useState([]);
   const [honoraireEmployees, setHonoraireEmployees] = useState([]);
+  const [journalierEmployees, setJournalierEmployees] = useState([]);
+  const [todayAttendances, setTodayAttendances] = useState({});
   const [stats, setStats] = useState({
     todayPayments: 0,
     todayAmount: 0,
@@ -39,6 +41,7 @@ const CashierDashboard = () => {
     fetchPendingPayslips();
     fetchTodayPayments();
     fetchHonoraireEmployees();
+    fetchJournalierEmployees();
     fetchCompanyStats();
   }, []);
 
@@ -120,6 +123,32 @@ const CashierDashboard = () => {
       setHonoraireEmployees(employees);
     } catch (error) {
       console.error('Erreur lors du chargement des employés honoraires:', error);
+    }
+  };
+
+  const fetchJournalierEmployees = async () => {
+    try {
+      const companyId = user?.companyId;
+      const response = await axios.get(`http://localhost:3000/api/employees?companyId=${companyId}`);
+      const employees = response.data.employees.filter(e =>
+        e.isActive && e.contractType === 'JOURNALIER'
+      );
+
+      // Récupérer les pointages du jour pour chaque employé journalier
+      const attendances = {};
+      for (const employee of employees) {
+        try {
+          const attendanceRes = await axios.get(`http://localhost:3000/api/attendances/today?employeeId=${employee.id}`);
+          attendances[employee.id] = attendanceRes.data;
+        } catch (error) {
+          attendances[employee.id] = null;
+        }
+      }
+
+      setJournalierEmployees(employees);
+      setTodayAttendances(attendances);
+    } catch (error) {
+      console.error('Erreur lors du chargement des employés journaliers:', error);
     }
   };
 
@@ -250,6 +279,33 @@ const CashierDashboard = () => {
       employeeId: employee.id
     });
     setShowManualEntryModal(true);
+  };
+
+  const payJournalierEmployee = async (employee) => {
+    const attendance = todayAttendances[employee.id];
+
+    if (!attendance || !attendance.checkOut) {
+      showNotification('Cet employé n\'a pas encore pointé son départ aujourd\'hui', 'error');
+      return;
+    }
+
+    if (!confirm(`Confirmer le paiement journalier de ${employee.firstName} ${employee.lastName} pour aujourd'hui (${employee.dailyRate} FCFA) ?`)) {
+      return;
+    }
+
+    try {
+      await axios.post(`http://localhost:3000/api/payruns/pay-journalier/${employee.id}`, {
+        companyId: user?.companyId
+      });
+
+      showNotification(`Paiement journalier effectué avec succès pour ${employee.firstName} ${employee.lastName}`);
+      fetchJournalierEmployees(); // Rafraîchir la liste
+      fetchPendingPayslips(); // Rafraîchir les paiements
+      fetchTodayPayments(); // Rafraîchir les paiements du jour
+    } catch (error) {
+      console.error('Erreur lors du paiement journalier:', error);
+      showNotification('Erreur: ' + (error.response?.data?.error || error.message), 'error');
+    }
   };
 
   const showNotification = (message, type = 'success') => {
@@ -508,6 +564,70 @@ const CashierDashboard = () => {
                     </div>
                   </li>
                 ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Employés Journaliers */}
+          {journalierEmployees.length > 0 && (
+            <div className="mt-8 bg-white shadow overflow-hidden sm:rounded-md">
+              <div className="px-4 py-5 sm:px-6 bg-blue-50">
+                <h3 className="text-lg leading-6 font-medium text-gray-900 flex items-center">
+                  <Clock className="h-5 w-5 mr-2 text-blue-600" />
+                  Employés Journaliers - Paiement Quotidien
+                </h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  Vérifiez les pointages du jour et payez immédiatement les employés présents.
+                </p>
+              </div>
+              <ul className="divide-y divide-gray-200">
+                {journalierEmployees.map((employee) => {
+                  const attendance = todayAttendances[employee.id];
+                  const hasCheckedOut = attendance && attendance.checkOut;
+                  const canPay = hasCheckedOut && attendance.status === 'PRESENT';
+
+                  return (
+                    <li key={employee.id} className="px-6 py-4 hover:bg-gray-50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900">
+                            {employee.firstName} {employee.lastName}
+                          </p>
+                          <p className="text-sm text-gray-500">
+                            {employee.position} • {employee.dailyRate} FCFA/jour
+                          </p>
+                          <div className="mt-1">
+                            {hasCheckedOut ? (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                ✅ Pointage complet ({attendance.hoursWorked?.toFixed(1)}h)
+                              </span>
+                            ) : attendance && attendance.checkIn ? (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                🟡 Arrivée pointée, départ en attente
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                ❌ Aucun pointage aujourd'hui
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => payJournalierEmployee(employee)}
+                          disabled={!canPay}
+                          className={`px-4 py-2 rounded-md text-sm font-medium flex items-center ${
+                            canPay
+                              ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                          }`}
+                        >
+                          <DollarSign className="h-4 w-4 mr-1" />
+                          {canPay ? 'Payer Maintenant' : 'Non Disponible'}
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}
