@@ -16,6 +16,8 @@ const Companies = () => {
   const [companyUsers, setCompanyUsers] = useState([]);
   const [showUserModal, setShowUserModal] = useState(false);
   const [showEmployeeModal, setShowEmployeeModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [companyToDelete, setCompanyToDelete] = useState(null);
   const [userFormData, setUserFormData] = useState({
     email: '',
     password: '',
@@ -324,13 +326,20 @@ const Companies = () => {
 
 
 
-  const handleDelete = async (companyId) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette entreprise ? Cette action est irréversible.')) return;
+  const handleDelete = (company) => {
+    setCompanyToDelete(company);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!companyToDelete) return;
 
     try {
-      await axios.delete(`http://localhost:3000/api/companies/${companyId}`);
+      await axios.delete(`http://localhost:3000/api/companies/${companyToDelete.id}`);
       fetchCompanies();
-      addNotification('success', 'Entreprise supprimée', 'L\'entreprise a été supprimée avec succès');
+      addNotification('success', 'Entreprise supprimée', 'L\'entreprise et toutes ses données ont été supprimées définitivement');
+      setShowDeleteModal(false);
+      setCompanyToDelete(null);
     } catch (error) {
       console.error('Erreur lors de la suppression:', error);
       addNotification('error', 'Erreur de suppression', error.response?.data?.error || error.message);
@@ -587,7 +596,7 @@ const Companies = () => {
                             Modifier
                           </button>
                           <button
-                            onClick={() => handleDelete(company.id)}
+                            onClick={() => handleDelete(company)}
                             className="text-red-600 hover:text-red-900 text-sm font-medium"
                           >
                             Supprimer
@@ -1225,6 +1234,71 @@ const Companies = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de confirmation de suppression */}
+      {showDeleteModal && companyToDelete && (
+        <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl transform transition-all max-h-[90vh] overflow-hidden">
+            {/* Header avec fond rouge */}
+            <div className="bg-red-600 px-6 py-4 rounded-t-2xl">
+              <h3 className="text-xl font-bold text-white flex items-center">
+                <Trash2 className="h-6 w-6 mr-2" />
+                Supprimer l'entreprise
+              </h3>
+              <p className="text-red-100 text-sm mt-1">
+                Cette action est irréversible
+              </p>
+            </div>
+
+            <div className="px-6 py-4 max-h-[calc(90vh-120px)] overflow-y-auto">
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <XCircle className="h-6 w-6 text-red-400" />
+                  </div>
+                  <div className="ml-3">
+                    <h4 className="text-lg font-medium text-red-800">
+                      Êtes-vous sûr de vouloir supprimer "{companyToDelete.name}" ?
+                    </h4>
+                    <div className="mt-3 text-sm text-red-700">
+                      <ul className="list-disc pl-5 space-y-2">
+                        <li>Tous les employés seront supprimés</li>
+                        <li>Tous les utilisateurs seront supprimés</li>
+                        <li>Tous les cycles de paie seront supprimés</li>
+                        <li>Tous les paiements seront supprimés</li>
+                        <li>Tous les pointages seront supprimés</li>
+                        <li>Cette action ne peut pas être annulée</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Boutons */}
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setCompanyToDelete(null);
+                  }}
+                  className="px-6 py-3 text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all duration-200 transform hover:scale-105"
+                >
+                  ❌ Annuler
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDelete}
+                  className="px-6 py-3 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                >
+                  <Trash2 className="h-5 w-5 mr-2" />
+                  Supprimer définitivement
+                </button>
+              </div>
             </div>
           </div>
         </div>

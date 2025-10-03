@@ -23,8 +23,17 @@ export class PayRunController {
 
   static async getAllPayRuns(req: AuthRequest, res: Response) {
     try {
-      const { companyId } = req.query;
-      const payRuns = await PayRunService.getAllPayRuns(companyId as string);
+      let filterCompanyId = req.query.companyId as string;
+
+      // Vérifier les permissions : Super admin peut voir partout, autres rôles seulement leur entreprise
+      if (req.user?.role !== 'SUPER_ADMIN') {
+        filterCompanyId = req.user?.companyId || '';
+        if (!filterCompanyId) {
+          return res.status(403).json({ error: 'Accès non autorisé - entreprise non trouvée' });
+        }
+      }
+
+      const payRuns = await PayRunService.getAllPayRuns(filterCompanyId);
 
       res.json({ payRuns });
     } catch (error: any) {

@@ -33,8 +33,17 @@ export class EmployeeController {
 
   static async getAllEmployees(req: AuthRequest, res: Response) {
     try {
-      const { companyId } = req.query;
-      const employees = await EmployeeService.getAllEmployees(companyId as string);
+      let filterCompanyId = req.query.companyId as string;
+
+      // Vérifier les permissions : Super admin peut voir partout, autres rôles seulement leur entreprise
+      if (req.user?.role !== 'SUPER_ADMIN') {
+        filterCompanyId = req.user?.companyId || '';
+        if (!filterCompanyId) {
+          return res.status(403).json({ error: 'Accès non autorisé - entreprise non trouvée' });
+        }
+      }
+
+      const employees = await EmployeeService.getAllEmployees(filterCompanyId);
 
       res.json({ employees });
     } catch (error: any) {

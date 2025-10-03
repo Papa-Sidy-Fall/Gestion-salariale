@@ -35,12 +35,17 @@ export class PaymentController {
 
   static async getPaymentsByCompany(req: AuthRequest, res: Response) {
     try {
-      const { companyId } = req.params;
-      if (!companyId) {
+      let filterCompanyId = req.params.companyId as string;
+      if (!filterCompanyId) {
         return res.status(400).json({ error: 'ID entreprise requis' });
       }
 
-      const payments = await PaymentService.getPaymentsByCompany(companyId);
+      // Vérifier les permissions : Super admin peut voir partout, autres rôles seulement leur entreprise
+      if (req.user?.role !== 'SUPER_ADMIN' && req.user?.companyId !== filterCompanyId) {
+        return res.status(403).json({ error: 'Accès non autorisé à cette entreprise' });
+      }
+
+      const payments = await PaymentService.getPaymentsByCompany(filterCompanyId);
 
       res.json({ payments });
     } catch (error: any) {
@@ -50,8 +55,18 @@ export class PaymentController {
 
   static async getAllPayments(req: AuthRequest, res: Response) {
     try {
-      const payments = await PaymentService.getAllPayments();
+      // Vérifier les permissions : Super admin peut voir partout, autres rôles seulement leur entreprise
+      if (req.user?.role !== 'SUPER_ADMIN') {
+        const companyId = req.user?.companyId;
+        if (!companyId) {
+          return res.status(403).json({ error: 'Accès non autorisé - entreprise non trouvée' });
+        }
+        const payments = await PaymentService.getPaymentsByCompany(companyId);
+        return res.json({ payments });
+      }
 
+      // Super admin voit tous les paiements
+      const payments = await PaymentService.getAllPayments();
       res.json({ payments });
     } catch (error: any) {
       res.status(500).json({ error: error.message });
