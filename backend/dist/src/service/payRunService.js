@@ -85,17 +85,43 @@ class PayRunService {
         return payRun;
     }
     static async deletePayRun(id) {
-        // Vérifier qu'il n'y a pas de bulletins approuvés
-        const approvedPayslips = await prisma.payslip.count({
-            where: {
-                payRunId: id,
-                status: { in: ['PAYE', 'PARTIEL'] }
+        const payRun = await prisma.payRun.findUnique({
+            where: { id },
+            include: {
+                payslips: true,
+                company: true
             }
         });
-        if (approvedPayslips > 0) {
-            throw new Error('Impossible de supprimer un cycle avec des bulletins payés');
+        if (!payRun) {
+            throw new Error('Cycle de paie non trouvé');
         }
-        // Supprimer d'abord les bulletins
+        // Calculer le montant total des bulletins payés pour rembourser le budget si nécessaire
+        const totalPaid = payRun.payslips.reduce((sum, payslip) => {
+            if (payslip.status === 'PAYE' || payslip.status === 'PARTIEL') { // Inclure PARTIEL pour le remboursement
+                return sum + payslip.net;
+            }
+            return sum;
+        }, 0);
+        // Si le cycle était approuvé ou clôturé et que des montants ont été payés, rembourser le budget
+        if ((payRun.status === 'APPROUVE' || payRun.status === 'CLOTURE') && totalPaid > 0) {
+            const company = await prisma.company.findUnique({ where: { id: payRun.company.id } });
+            if (company) {
+                const newBudget = company.budget + totalPaid;
+                await prisma.company.update({
+                    where: { id: payRun.company.id },
+                    data: { budget: newBudget }
+                });
+            }
+        }
+        // Supprimer d'abord les paiements liés aux bulletins
+        await prisma.payment.deleteMany({
+            where: {
+                payslip: {
+                    payRunId: id
+                }
+            }
+        });
+        // Supprimer les bulletins
         await prisma.payslip.deleteMany({
             where: { payRunId: id }
         });
@@ -110,7 +136,9 @@ class PayRunService {
             where: { id: payRunId },
             include: {
                 company: true,
-                payslips: true
+                payslips: true,
+                // Inclure l'option de paiement pour les employés fixes
+                // fixedEmployeePaymentOption: true // Ceci n'est pas nécessaire car c'est déjà un champ du modèle PayRun
             }
         });
         if (!payRun) {
@@ -146,39 +174,34 @@ class PayRunService {
         const endDate = new Date(year, month, 0);
         for (const employee of employees) {
             let grossSalary = 0;
-            // Calculer le salaire selon le type de contrat
+            let daysWorked = 0;
+            let totalHours = 0;
+            // Calculer les jours travaillés/heures pour tous les types de contrats
+            const attendances = await prisma.attendance.findMany({
+                where: {
+                    employeeId: employee.id,
+                    date: {
+                        gte: startDate,
+                        lte: endDate,
+                    },
+                    status: client_1.AttendanceStatus.PRESENT,
+                },
+            });
+            daysWorked = attendances.length;
+            totalHours = attendances.reduce((sum, a) => sum + (a.hoursWorked || 0), 0);
+            // Calculer le salaire selon le type de contrat et l'option de paiement pour les fixes
             if (employee.contractType === 'FIXE') {
-                // Salaire fixe mensuel
-                grossSalary = employee.rate;
+                if (payRun.fixedEmployeePaymentOption === 'FULL_MONTH') {
+                    grossSalary = employee.rate; // Salaire fixe complet
+                }
+                else if (payRun.fixedEmployeePaymentOption === 'DAYS_WORKED') {
+                    grossSalary = daysWorked * (employee.dailyRate || (employee.rate / 30)); // Payer au prorata des jours travaillés
+                }
             }
             else if (employee.contractType === 'JOURNALIER') {
-                // Calculer basé sur les jours travaillés
-                const attendances = await prisma.attendance.findMany({
-                    where: {
-                        employeeId: employee.id,
-                        date: {
-                            gte: startDate,
-                            lte: endDate,
-                        },
-                        status: client_1.AttendanceStatus.PRESENT,
-                    },
-                });
-                const daysWorked = attendances.length;
                 grossSalary = daysWorked * (employee.dailyRate || 0);
             }
             else if (employee.contractType === 'HONORAIRE') {
-                // Calculer basé sur les heures travaillées
-                const attendances = await prisma.attendance.findMany({
-                    where: {
-                        employeeId: employee.id,
-                        date: {
-                            gte: startDate,
-                            lte: endDate,
-                        },
-                        status: client_1.AttendanceStatus.PRESENT,
-                    },
-                });
-                const totalHours = attendances.reduce((sum, a) => sum + (a.hoursWorked || 0), 0);
                 grossSalary = totalHours * (employee.hourlyRate || 0);
             }
             // Calculer les déductions (simplifié - 5% pour l'exemple)
@@ -205,7 +228,8 @@ class PayRunService {
         const payRun = await prisma.payRun.findUnique({
             where: { id },
             include: {
-                payslips: true
+                payslips: true,
+                company: true
             }
         });
         if (!payRun) {
@@ -218,6 +242,18 @@ class PayRunService {
         if (payRun.payslips.length === 0) {
             throw new Error('Aucun bulletin généré pour ce cycle');
         }
+        // Calculer le total des salaires pour ce cycle
+        const totalSalary = payRun.payslips.reduce((sum, payslip) => sum + payslip.net, 0);
+        // Vérifier que le budget de l'entreprise permet de payer
+        if (totalSalary > payRun.company.budget) {
+            throw new Error(`Budget insuffisant. Total demandé: ${totalSalary} FCFA, Budget disponible: ${payRun.company.budget} FCFA`);
+        }
+        // Déduire du budget
+        const newBudget = payRun.company.budget - totalSalary;
+        await prisma.company.update({
+            where: { id: payRun.company.id },
+            data: { budget: newBudget }
+        });
         // Approuver le cycle
         const updatedPayRun = await prisma.payRun.update({
             where: { id },
@@ -274,6 +310,97 @@ class PayRunService {
             orderBy: { createdAt: 'desc' }
         });
         return payRuns;
+    }
+    static async payJournalierEmployee(employeeId, companyId) {
+        // Vérifier que l'employé existe et est journalier
+        const employee = await prisma.employee.findUnique({
+            where: { id: employeeId },
+            include: { company: true }
+        });
+        if (!employee) {
+            throw new Error('Employé non trouvé');
+        }
+        if (employee.contractType !== 'JOURNALIER') {
+            throw new Error('Cette fonction est réservée aux employés journaliers');
+        }
+        if (employee.companyId !== companyId) {
+            throw new Error('Employé non autorisé pour cette entreprise');
+        }
+        // Vérifier le pointage du jour
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const attendance = await prisma.attendance.findUnique({
+            where: {
+                employeeId_date: {
+                    employeeId,
+                    date: today
+                }
+            }
+        });
+        if (!attendance || !attendance.checkOut) {
+            throw new Error('L\'employé n\'a pas encore pointé son départ aujourd\'hui');
+        }
+        if (attendance.status !== 'PRESENT') {
+            throw new Error('L\'employé n\'est pas marqué comme présent aujourd\'hui');
+        }
+        // Créer un cycle de paie spécial pour ce paiement journalier
+        const period = `DAILY-${today.toISOString().split('T')[0]}`;
+        const payRun = await prisma.payRun.create({
+            data: {
+                period,
+                companyId,
+                status: 'BROUILLON'
+            }
+        });
+        // Calculer le salaire journalier
+        const grossSalary = employee.dailyRate || 0;
+        const deductions = grossSalary * 0.05; // 5% de déductions
+        const netSalary = grossSalary - deductions;
+        // Créer le bulletin
+        const payslip = await prisma.payslip.create({
+            data: {
+                employeeId,
+                payRunId: payRun.id,
+                gross: grossSalary,
+                deductions,
+                net: netSalary,
+                status: 'EN_ATTENTE'
+            }
+        });
+        // Vérifier le budget
+        if (netSalary > employee.company.budget) {
+            throw new Error(`Budget insuffisant. Montant demandé: ${netSalary} FCFA, Budget disponible: ${employee.company.budget} FCFA`);
+        }
+        // Déduire du budget
+        const newBudget = employee.company.budget - netSalary;
+        await prisma.company.update({
+            where: { id: companyId },
+            data: { budget: newBudget }
+        });
+        // Générer le paiement
+        const payment = await prisma.payment.create({
+            data: {
+                payslipId: payslip.id,
+                amount: netSalary,
+                method: 'ESPECES'
+            }
+        });
+        // Marquer le bulletin comme payé
+        await prisma.payslip.update({
+            where: { id: payslip.id },
+            data: { status: 'PAYE' }
+        });
+        // Approuver et clôturer immédiatement le cycle
+        await prisma.payRun.update({
+            where: { id: payRun.id },
+            data: { status: 'CLOTURE' }
+        });
+        return {
+            payRun,
+            payslip,
+            payment,
+            amount: netSalary
+        };
     }
 }
 exports.PayRunService = PayRunService;

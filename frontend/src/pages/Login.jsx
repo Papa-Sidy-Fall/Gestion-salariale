@@ -13,13 +13,12 @@ const Login = () => {
 
   // Fonctions de validation avec regex
   const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(String(email).toLowerCase());
   };
 
   const validatePassword = (password) => {
-    // Au moins 1 caractère pour la connexion (validation côté serveur pour la sécurité)
-    return password.length > 0;
+    return password.length >= 6; // Exemple: le mot de passe doit avoir au moins 6 caractères
   };
 
   const handleSubmit = async (e) => {
@@ -28,18 +27,25 @@ const Login = () => {
     setLoading(true);
 
     // Validation avec regex
-    if (!validateEmail(email)) {
+    console.log('Email avant validation (depuis state):', email);
+    const isEmailValid = validateEmail(email);
+    console.log('Email valide:', isEmailValid);
+    if (!isEmailValid) {
       setError('Veuillez saisir une adresse email valide');
       setLoading(false);
       return;
     }
 
-    if (!validatePassword(password)) {
-      setError('Veuillez saisir votre mot de passe');
+    console.log('Mot de passe avant validation (depuis state):', password);
+    const isPasswordValid = validatePassword(password);
+    console.log('Mot de passe valide:', isPasswordValid);
+    if (!isPasswordValid) {
+      setError('Veuillez saisir votre mot de passe (au moins 6 caractères)');
       setLoading(false);
       return;
     }
 
+    console.log('Tentative de connexion avec:', { email, password });
     try {
       await login(email, password);
       navigate('/dashboard');
@@ -94,11 +100,13 @@ const Login = () => {
                     id="email"
                     name="email"
                     type="email"
-                    required
                     className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white"
                     placeholder="votre.email@entreprise.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      console.log('Email mis à jour:', e.target.value); // Log pour le débogage
+                    }}
                   />
                 </div>
               </div>
@@ -114,11 +122,13 @@ const Login = () => {
                     id="password"
                     name="password"
                     type="password"
-                    required
                     className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white"
                     placeholder="Votre mot de passe"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      console.log('Mot de passe mis à jour:', e.target.value); // Log pour le débogage
+                    }}
                   />
                 </div>
               </div>

@@ -4,8 +4,36 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { DollarSign, Clock, CheckCircle, AlertCircle, FileText, CreditCard, Calculator, Eye, User, Briefcase } from 'lucide-react';
 
+// Composant StatCard pour afficher les statistiques
+const StatCard = ({ title, value, icon: Icon, subtitle }) => (
+  <div className="bg-white overflow-hidden shadow rounded-lg">
+    <div className="p-5">
+      <div className="flex items-center">
+        <div className="flex-shrink-0">
+          <Icon className="h-8 w-8 text-gray-500" />
+        </div>
+        <div className="ml-5 w-0 flex-1">
+          <dl>
+            <dt className="text-sm font-medium text-gray-500 truncate">
+              {title}
+            </dt>
+            <dd className="text-lg font-medium text-gray-900">
+              {typeof value === 'number' ? value.toLocaleString() : value}
+            </dd>
+            {subtitle && (
+              <dd className="text-xs text-gray-400 mt-1">
+                {subtitle}
+              </dd>
+            )}
+          </dl>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 const CashierDashboard = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, companyColor, companyLogo } = useAuth();
   const navigate = useNavigate();
   const [pendingPayslips, setPendingPayslips] = useState([]);
   const [todayPayments, setTodayPayments] = useState([]);
@@ -59,7 +87,7 @@ const CashierDashboard = () => {
 
       payRuns.forEach(payRun => {
         if (payRun.payslips) {
-          payRun.payslips.forEach(payslip => {
+          payRuns.payslips.forEach(payslip => {
             if (payslip.status !== 'PAYE') {
               const totalPaid = payslip.payments?.reduce((sum, p) => sum + p.amount, 0) || 0;
               const remainingAmount = payslip.net - totalPaid;
@@ -320,32 +348,46 @@ const CashierDashboard = () => {
     setTimeout(() => setNotification(null), 5000); // Disparaît après 5 secondes
   };
 
-  const StatCard = ({ title, value, icon: Icon, color, subtitle }) => (
-    <div className={`bg-white overflow-hidden shadow rounded-lg ${color}`}>
-      <div className="p-5">
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
-            <Icon className="h-8 w-8 text-indigo-600" />
-          </div>
-          <div className="ml-5 w-0 flex-1">
-            <dl>
-              <dt className="text-sm font-medium text-gray-500 truncate">
-                {title}
-              </dt>
-              <dd className="text-2xl font-bold text-gray-900">
-                {value}
-              </dd>
-              {subtitle && (
-                <dd className="text-sm text-gray-600 mt-1">
-                  {subtitle}
-                </dd>
-              )}
-            </dl>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+  const getTailwindColorClass = (hexColor, type = 'bg') => {
+    const colorMap = {
+      '#3B82F6': 'blue',
+      '#10B981': 'green',
+      '#8B5CF6': 'purple',
+      '#EF4444': 'red',
+      '#F97316': 'orange',
+      '#EC4899': 'pink',
+      '#6366F1': 'indigo',
+      '#14B8A6': 'teal',
+      '#06B6D4': 'cyan',
+      '#059669': 'emerald',
+      '#F59E0B': 'amber',
+      '#6B7280': 'gray',
+      '#6FA4AF': 'teal'
+    };
+
+    const baseColor = colorMap[hexColor] || 'blue';
+
+    if (type === 'bg') return `bg-${baseColor}-600`;
+    if (type === 'hoverBg') return `hover:bg-${baseColor}-700`;
+    if (type === 'text') return `text-${baseColor}-600`;
+    if (type === 'border') return `border-${baseColor}-500`;
+    if (type === 'bg-light') return `bg-${baseColor}-50`;
+    if (type === 'border-light') return `border-${baseColor}-200`;
+    if (type === 'focus-border') return `focus:border-${baseColor}-500`;
+    if (type === 'focus-ring') return `focus:ring-${baseColor}-100`;
+    return '';
+  };
+
+  const primaryColor = companyColor || '#6FA4AF';
+  const primaryBgClass = getTailwindColorClass(primaryColor, 'bg');
+  const primaryHoverBgClass = getTailwindColorClass(primaryColor, 'hoverBg');
+  const primaryTextColorClass = getTailwindColorClass(primaryColor, 'text');
+  const primaryBorderColorClass = getTailwindColorClass(primaryColor, 'border');
+  const primaryBgLightClass = getTailwindColorClass(primaryColor, 'bg-light');
+  const primaryBorderLightClass = getTailwindColorClass(primaryColor, 'border-light');
+  const primaryFocusBorderClass = getTailwindColorClass(primaryColor, 'focus-border');
+  const primaryFocusRingClass = getTailwindColorClass(primaryColor, 'focus-ring');
+
 
   if (loading) {
     return (
@@ -362,7 +404,16 @@ const CashierDashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <CreditCard className="h-8 w-8 text-indigo-600 mr-3" />
+              {companyLogo && (
+                <img
+                  src={companyLogo}
+                  alt="Logo entreprise"
+                  className="h-8 w-8 rounded-full object-cover mr-3"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+              )}
               <h1 className="text-2xl font-bold text-gray-900">
                 Dashboard Caissier
               </h1>
@@ -419,33 +470,28 @@ const CashierDashboard = () => {
                 title="Paiements Effectués"
                 value={stats.todayPayments}
                 icon={CheckCircle}
-                color="border-l-4 border-green-500"
                 subtitle="Aujourd'hui"
               />
               <StatCard
                 title="Montant du Jour"
                 value={`${stats.todayAmount.toLocaleString()} FCFA`}
                 icon={DollarSign}
-                color="border-l-4 border-blue-500"
               />
               <StatCard
                 title="En Attente"
                 value={stats.pendingCount}
                 icon={Clock}
-                color="border-l-4 border-orange-500"
                 subtitle="Bulletins"
               />
               <StatCard
                 title="Montant Restant"
                 value={`${stats.pendingAmount.toLocaleString()} FCFA`}
                 icon={AlertCircle}
-                color="border-l-4 border-red-500"
               />
               <StatCard
                 title="Budget Restant"
                 value={`${stats.budget.toLocaleString()} FCFA`}
                 icon={DollarSign}
-                color="border-l-4 border-green-500"
               />
             </div>
           </div>
@@ -453,9 +499,9 @@ const CashierDashboard = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Bulletins en Attente */}
             <div className="bg-white shadow overflow-hidden sm:rounded-md">
-              <div className="px-4 py-5 sm:px-6 bg-orange-50">
+              <div className={`px-4 py-5 sm:px-6 ${primaryBgLightClass}`}>
                 <h3 className="text-lg leading-6 font-medium text-gray-900 flex items-center">
-                  <Clock className="h-5 w-5 mr-2 text-orange-600" />
+                  <Clock className={`h-5 w-5 mr-2 ${primaryTextColorClass}`} />
                   Bulletins en Attente de Paiement
                 </h3>
               </div>
@@ -470,13 +516,13 @@ const CashierDashboard = () => {
                         <p className="text-sm text-gray-500">
                           {payslip.payRunPeriod} • {payslip.employee.position}
                         </p>
-                        <p className="text-sm font-medium text-orange-600 mt-1">
+                        <p className={`text-sm font-medium ${primaryTextColorClass} mt-1`}>
                           Restant: {payslip.remainingAmount.toLocaleString()} FCFA
                         </p>
                       </div>
                       <button
                         onClick={() => openPaymentModal(payslip)}
-                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center"
+                        className={`${primaryBgClass} ${primaryHoverBgClass} text-white px-4 py-2 rounded-md text-sm font-medium flex items-center`}
                       >
                         <DollarSign className="h-4 w-4 mr-1" />
                         Payer
@@ -487,7 +533,7 @@ const CashierDashboard = () => {
               </ul>
               {pendingPayslips.length === 0 && (
                 <div className="text-center py-12">
-                  <CheckCircle className="mx-auto h-12 w-12 text-green-400" />
+                  <CheckCircle className={`mx-auto h-12 w-12 ${primaryTextColorClass}`} />
                   <p className="mt-2 text-gray-500">Tous les paiements sont à jour!</p>
                 </div>
               )}
@@ -495,9 +541,9 @@ const CashierDashboard = () => {
 
             {/* Paiements du Jour */}
             <div className="bg-white shadow overflow-hidden sm:rounded-md">
-              <div className="px-4 py-5 sm:px-6 bg-green-50">
+              <div className={`px-4 py-5 sm:px-6 ${primaryBgLightClass}`}>
                 <h3 className="text-lg leading-6 font-medium text-gray-900 flex items-center">
-                  <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
+                  <CheckCircle className={`h-5 w-5 mr-2 ${primaryTextColorClass}`} />
                   Paiements du Jour
                 </h3>
               </div>
@@ -512,13 +558,13 @@ const CashierDashboard = () => {
                         <p className="text-sm text-gray-500">
                           {new Date(payment.date).toLocaleTimeString('fr-FR')} • {payment.method}
                         </p>
-                        <p className="text-sm font-medium text-green-600 mt-1">
+                        <p className={`text-sm font-medium ${primaryTextColorClass} mt-1`}>
                           {payment.amount.toLocaleString()} FCFA
                         </p>
                       </div>
                       <button
                         onClick={() => generateInvoice(payment.id)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                        className={`${primaryBgClass} ${primaryHoverBgClass} text-white px-3 py-2 rounded-md text-sm font-medium flex items-center`}
                         title="Télécharger la facture"
                       >
                         <FileText className="h-4 w-4 mr-1" />
@@ -530,7 +576,7 @@ const CashierDashboard = () => {
               </ul>
               {todayPayments.length === 0 && (
                 <div className="text-center py-12">
-                  <Clock className="mx-auto h-12 w-12 text-gray-400" />
+                  <Clock className={`mx-auto h-12 w-12 ${primaryTextColorClass}`} />
                   <p className="mt-2 text-gray-500">Aucun paiement aujourd'hui.</p>
                 </div>
               )}
@@ -540,9 +586,9 @@ const CashierDashboard = () => {
           {/* Employés Honoraires */}
           {honoraireEmployees.length > 0 && (
             <div className="mt-8 bg-white shadow overflow-hidden sm:rounded-md">
-              <div className="px-4 py-5 sm:px-6 bg-purple-50">
+              <div className={`px-4 py-5 sm:px-6 ${primaryBgLightClass}`}>
                 <h3 className="text-lg leading-6 font-medium text-gray-900 flex items-center">
-                  <Calculator className="h-5 w-5 mr-2 text-purple-600" />
+                  <Calculator className={`h-5 w-5 mr-2 ${primaryTextColorClass}`} />
                   Employés Honoraires - Saisie des Heures
                 </h3>
                 <p className="mt-1 text-sm text-gray-600">
@@ -564,14 +610,14 @@ const CashierDashboard = () => {
                       <div className="flex space-x-2">
                         <button
                           onClick={() => openManualEntryModal(employee)}
-                          className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                          className={`${primaryBgClass} ${primaryHoverBgClass} text-white px-3 py-2 rounded-md text-sm font-medium flex items-center`}
                         >
                           <Calculator className="h-4 w-4 mr-1" />
                           Saisir Heures
                         </button>
                         <button
                           onClick={() => showEmployeeDetails(employee)}
-                          className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-md text-sm font-medium flex items-center"
+                          className="hover:bg-gray-700 text-white px-3 py-2 rounded-md text-sm font-medium flex items-center"
                         >
                           <Eye className="h-4 w-4 mr-1" />
                           Détails
@@ -587,9 +633,9 @@ const CashierDashboard = () => {
           {/* Employés Journaliers */}
           {journalierEmployees.length > 0 && (
             <div className="mt-8 bg-white shadow overflow-hidden sm:rounded-md">
-              <div className="px-4 py-5 sm:px-6 bg-blue-50">
+              <div className={`px-4 py-5 sm:px-6 ${primaryBgLightClass}`}>
                 <h3 className="text-lg leading-6 font-medium text-gray-900 flex items-center">
-                  <Clock className="h-5 w-5 mr-2 text-blue-600" />
+                  <Clock className={`h-5 w-5 mr-2 ${primaryTextColorClass}`} />
                   Employés Journaliers - Paiement Quotidien
                 </h3>
                 <p className="mt-1 text-sm text-gray-600">
@@ -634,7 +680,7 @@ const CashierDashboard = () => {
                             disabled={!canPay}
                             className={`px-3 py-2 rounded-md text-sm font-medium flex items-center ${
                               canPay
-                                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                ? `${primaryBgClass} ${primaryHoverBgClass} text-white`
                                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                             }`}
                           >
@@ -665,14 +711,14 @@ const CashierDashboard = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <button
                 onClick={() => navigate('/payments')}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-md text-sm font-medium flex items-center justify-center"
+                className={`${primaryBgClass} ${primaryHoverBgClass}  text-white px-6 py-3 rounded-md text-sm font-medium flex items-center justify-center`}
               >
                 <FileText className="h-5 w-5 mr-2" />
                 Tous les Paiements
               </button>
               <button
                 onClick={() => navigate('/payruns')}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-md text-sm font-medium flex items-center justify-center"
+                className={`${primaryBgClass} ${primaryHoverBgClass}  text-white px-6 py-3 rounded-md text-sm font-medium flex items-center justify-center`}
               >
                 <Clock className="h-5 w-5 mr-2" />
                 Cycles de Paie
@@ -694,12 +740,12 @@ const CashierDashboard = () => {
         <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl transform transition-all max-h-[90vh] overflow-hidden">
             {/* Header avec fond uni */}
-            <div className="bg-green-600 px-6 py-4 rounded-t-2xl">
+            <div className={`${primaryBgClass} px-6 py-4 rounded-t-2xl`}>
               <h3 className="text-xl font-bold text-white flex items-center">
                 <DollarSign className="h-6 w-6 mr-2" />
                 Enregistrer un Paiement
               </h3>
-              <p className="text-green-100 text-sm mt-1">
+              <p className="text-white text-sm mt-1">
                 Effectuez un paiement pour ce bulletin de salaire
               </p>
             </div>
@@ -721,7 +767,7 @@ const CashierDashboard = () => {
                   <p className="text-sm text-gray-600">
                     <strong>Net à payer:</strong> {selectedPayslip.net.toLocaleString()} FCFA
                   </p>
-                  <p className="text-sm font-medium text-orange-600">
+                  <p className="text-sm font-medium text-orange-600 mt-1">
                     <strong>Restant:</strong> {selectedPayslip.remainingAmount.toLocaleString()} FCFA
                   </p>
                 </div>
@@ -744,11 +790,10 @@ const CashierDashboard = () => {
                         <input
                           type="number"
                           step="0.01"
-                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-4 focus:ring-green-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                          className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${primaryFocusBorderClass} ${primaryFocusRingClass} transition-all duration-200 bg-gray-50 focus:bg-white`}
                           value={paymentData.amount}
                           onChange={(e) => setPaymentData({...paymentData, amount: e.target.value})}
                           placeholder="Montant en FCFA"
-                          required
                         />
                       </div>
                       <p className="text-xs text-gray-500">Maximum: {selectedPayslip.remainingAmount.toLocaleString()} FCFA</p>
@@ -760,10 +805,9 @@ const CashierDashboard = () => {
                       </label>
                       <div className="relative">
                         <select
-                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-green-500 focus:ring-4 focus:ring-green-100 transition-all duration-200 bg-gray-50 focus:bg-white appearance-none"
+                          className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${primaryFocusBorderClass} ${primaryFocusRingClass} transition-all duration-200 bg-gray-50 focus:bg-white appearance-none`}
                           value={paymentData.method}
                           onChange={(e) => setPaymentData({...paymentData, method: e.target.value})}
-                          required
                         >
                           <option value="ESPECES">💵 Espèces</option>
                           <option value="VIREMENT">🏦 Virement bancaire</option>
@@ -789,7 +833,7 @@ const CashierDashboard = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-3 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                    className={`${primaryBgClass} ${primaryHoverBgClass} text-white px-6 py-3 text-sm font-semibold rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl`}
                   >
                     <DollarSign className="h-5 w-5 mr-2" />
                     Enregistrer le paiement
@@ -806,12 +850,12 @@ const CashierDashboard = () => {
         <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl transform transition-all max-h-[90vh] overflow-hidden">
             {/* Header avec fond uni */}
-            <div className="bg-purple-600 px-6 py-4 rounded-t-2xl">
+            <div className={`${primaryBgClass} px-6 py-4 rounded-t-2xl`}>
               <h3 className="text-xl font-bold text-white flex items-center">
                 <Calculator className="h-6 w-6 mr-2" />
                 Saisie Manuelle des Heures
               </h3>
-              <p className="text-purple-100 text-sm mt-1">
+              <p className="text-white text-sm mt-1">
                 Enregistrez les heures travaillées pour calculer le salaire
               </p>
             </div>
@@ -831,11 +875,11 @@ const CashierDashboard = () => {
                     <strong>Taux horaire:</strong> {selectedEmployee.hourlyRate} FCFA/h
                   </p>
                   {manualEntryData.checkIn && manualEntryData.checkOut && (
-                    <div className="mt-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                      <p className="text-sm font-medium text-purple-800">
+                    <div className={`mt-3 p-3 ${primaryBgLightClass} rounded-lg ${primaryBorderLightClass}`}>
+                      <p className={`text-sm font-medium ${primaryTextColorClass}`}>
                         🕒 Heures travaillées: {calculatedHours.toFixed(1)}h
                       </p>
-                      <p className="text-sm font-medium text-purple-800">
+                      <p className={`text-sm font-medium ${primaryTextColorClass}`}>
                         💰 Montant estimé: {calculatedAmount.toLocaleString()} FCFA
                       </p>
                     </div>
@@ -859,10 +903,9 @@ const CashierDashboard = () => {
                       <div className="relative">
                         <input
                           type="date"
-                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                          className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${primaryFocusBorderClass} ${primaryFocusRingClass} transition-all duration-200 bg-gray-50 focus:bg-white`}
                           value={manualEntryData.date}
                           onChange={(e) => setManualEntryData({...manualEntryData, date: e.target.value})}
-                          required
                         />
                       </div>
                     </div>
@@ -875,11 +918,10 @@ const CashierDashboard = () => {
                         <div className="relative">
                           <input
                             type="time"
-                            className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                            className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${primaryFocusBorderClass} ${primaryFocusRingClass} transition-all duration-200 bg-gray-50 focus:bg-white`}
                             value={manualEntryData.checkIn}
                             onChange={(e) => setManualEntryData({...manualEntryData, checkIn: e.target.value})}
-                            required
-                          />
+                        />
                         </div>
                       </div>
 
@@ -890,11 +932,10 @@ const CashierDashboard = () => {
                         <div className="relative">
                           <input
                             type="time"
-                            className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                            className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${primaryFocusBorderClass} ${primaryFocusRingClass} transition-all duration-200 bg-gray-50 focus:bg-white`}
                             value={manualEntryData.checkOut}
                             onChange={(e) => setManualEntryData({...manualEntryData, checkOut: e.target.value})}
-                            required
-                          />
+                        />
                         </div>
                       </div>
                     </div>
@@ -906,7 +947,7 @@ const CashierDashboard = () => {
                       <div className="relative">
                         <textarea
                           rows="2"
-                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-200 bg-gray-50 focus:bg-white resize-none"
+                          className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${primaryFocusBorderClass} ${primaryFocusRingClass} transition-all duration-200 bg-gray-50 focus:bg-white resize-none`}
                           value={manualEntryData.notes}
                           onChange={(e) => setManualEntryData({...manualEntryData, notes: e.target.value})}
                           placeholder="Ajouter des notes sur cette journée..."
@@ -931,7 +972,7 @@ const CashierDashboard = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-3 text-sm font-semibold text-white bg-purple-600 hover:bg-purple-700 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                    className={`${primaryBgClass} ${primaryHoverBgClass} text-white px-6 py-3 text-sm font-semibold rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl`}
                   >
                     <Calculator className="h-5 w-5 mr-2" />
                     Enregistrer les heures
@@ -948,12 +989,12 @@ const CashierDashboard = () => {
         <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl transform transition-all max-h-[90vh] overflow-hidden">
             {/* Header avec fond uni */}
-            <div className="bg-indigo-600 px-6 py-4 rounded-t-2xl">
+            <div className={`${primaryBgClass} px-6 py-4 rounded-t-2xl`}>
               <h3 className="text-xl font-bold text-white flex items-center">
                 <Eye className="h-6 w-6 mr-2" />
                 Détails de l'employé
               </h3>
-              <p className="text-indigo-100 text-sm mt-1">
+              <p className="text-white text-sm mt-1">
                 Informations complètes sur {employeeDetails.firstName} {employeeDetails.lastName}
               </p>
             </div>
@@ -1003,7 +1044,7 @@ const CashierDashboard = () => {
                   {employeeDetails.contractType === 'FIXE' && (
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-gray-800">Salaire mensuel</label>
-                      <p className="text-gray-900 bg-green-50 px-3 py-2 rounded-lg font-medium">
+                      <p className={`text-gray-900 ${primaryBgLightClass} px-3 py-2 rounded-lg font-medium`}>
                         {employeeDetails.rate?.toLocaleString()} FCFA/mois
                       </p>
                     </div>
@@ -1012,7 +1053,7 @@ const CashierDashboard = () => {
                   {employeeDetails.contractType === 'JOURNALIER' && (
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-gray-800">Taux journalier</label>
-                      <p className="text-gray-900 bg-blue-50 px-3 py-2 rounded-lg font-medium">
+                      <p className={`text-gray-900 ${primaryBgLightClass} px-3 py-2 rounded-lg font-medium`}>
                         {employeeDetails.dailyRate?.toLocaleString()} FCFA/jour
                       </p>
                     </div>
@@ -1021,7 +1062,7 @@ const CashierDashboard = () => {
                   {employeeDetails.contractType === 'HONORAIRE' && (
                     <div className="space-y-2">
                       <label className="block text-sm font-semibold text-gray-800">Taux horaire</label>
-                      <p className="text-gray-900 bg-purple-50 px-3 py-2 rounded-lg font-medium">
+                      <p className={`text-gray-900 ${primaryBgLightClass} px-3 py-2 rounded-lg font-medium`}>
                         {employeeDetails.hourlyRate?.toLocaleString()} FCFA/heure
                       </p>
                     </div>

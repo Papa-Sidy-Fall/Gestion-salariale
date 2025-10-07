@@ -8,6 +8,7 @@ import Payments from './pages/Payments';
 import Companies from './pages/Companies';
 import Attendances from './pages/Attendances';
 import './App.css';
+import Layout from './components/Layout'; // Import du composant Layout
 
 function App() {
   return (
@@ -20,31 +21,31 @@ function App() {
               path="/dashboard"
               element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <Layout><Dashboard /></Layout>
                 </ProtectedRoute>
               }
             />
             <Route
               path="/employees"
               element={
-                <ProtectedRoute allowedRoles={['ADMIN']}>
-                  <Employees />
+                <ProtectedRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
+                  <Layout><Employees /></Layout>
                 </ProtectedRoute>
               }
             />
             <Route
               path="/payruns"
               element={
-                <ProtectedRoute allowedRoles={['ADMIN']}>
-                  <PayRuns />
+                <ProtectedRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
+                  <Layout><PayRuns /></Layout>
                 </ProtectedRoute>
               }
             />
             <Route
               path="/payments"
               element={
-                <ProtectedRoute allowedRoles={['CAISSIER', 'ADMIN']}>
-                  <Payments />
+                <ProtectedRoute allowedRoles={['CAISSIER', 'ADMIN', 'SUPER_ADMIN']}>
+                  <Layout><Payments /></Layout>
                 </ProtectedRoute>
               }
             />
@@ -52,7 +53,7 @@ function App() {
               path="/attendances"
               element={
                 <ProtectedRoute allowedRoles={['ADMIN', 'SUPER_ADMIN']}>
-                  <Attendances />
+                  <Layout><Attendances /></Layout>
                 </ProtectedRoute>
               }
             />
@@ -60,7 +61,7 @@ function App() {
               path="/companies"
               element={
                 <ProtectedRoute allowedRoles={['SUPER_ADMIN']}>
-                  <Companies />
+                  <Layout><Companies /></Layout>
                 </ProtectedRoute>
               }
             />

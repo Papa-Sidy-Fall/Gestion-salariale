@@ -9,6 +9,7 @@ async function main() {
   // Créer un Super Admin par défaut
   const hashedPassword = await bcrypt.hash('admin123', 10);
 
+  console.log('Tentative de création du Super Admin...');
   const superAdmin = await prisma.user.upsert({
     where: { email: 'super@test.com' },
     update: {},
@@ -22,8 +23,11 @@ async function main() {
   console.log('✅ Super Admin créé:', superAdmin.email);
 
   // Créer une entreprise de test
-  const company = await prisma.company.create({
-    data: {
+  console.log('Tentative de création de l\'Entreprise Test...');
+  const company = await prisma.company.upsert({
+    where: { name: 'Entreprise Test' },
+    update: {},
+    create: {
       name: 'Entreprise Test',
       address: '123 Rue de Test, Dakar',
       phone: '+221 77 123 45 67',
@@ -72,7 +76,6 @@ async function main() {
         position: 'Développeur',
         contractType: 'FIXE',
         rate: 500000,
-        bankDetails: 'IBAN: FR1234567890123456789012345',
         isActive: true,
         companyId: company.id
       }
@@ -84,7 +87,6 @@ async function main() {
         position: 'Designer',
         contractType: 'FIXE',
         rate: 400000,
-        bankDetails: 'IBAN: FR1234567890123456789012346',
         isActive: true,
         companyId: company.id
       }
@@ -96,7 +98,6 @@ async function main() {
         position: 'Manager',
         contractType: 'FIXE',
         rate: 600000,
-        bankDetails: 'IBAN: FR1234567890123456789012347',
         isActive: true,
         companyId: company.id
       }

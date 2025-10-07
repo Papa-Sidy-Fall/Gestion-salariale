@@ -55,14 +55,12 @@ class AttendanceService {
         if (!dateString) {
             throw new Error('Date invalide');
         }
-        const dateOnly = new Date(dateString);
+        const dateOnly = new Date(checkInDate.getFullYear(), checkInDate.getMonth(), checkInDate.getDate());
         // Vérifier si un pointage existe déjà pour ce jour
-        const existing = await prisma.attendance.findUnique({
+        const existing = await prisma.attendance.findFirst({
             where: {
-                employeeId_date: {
-                    employeeId,
-                    date: dateOnly,
-                },
+                employeeId,
+                date: dateOnly,
             },
         });
         if (existing) {
@@ -100,13 +98,11 @@ class AttendanceService {
         if (!dateString) {
             throw new Error('Date invalide');
         }
-        const dateOnly = new Date(dateString);
-        const attendance = await prisma.attendance.findUnique({
+        const dateOnly = new Date(checkOutDate.getFullYear(), checkOutDate.getMonth(), checkOutDate.getDate());
+        const attendance = await prisma.attendance.findFirst({
             where: {
-                employeeId_date: {
-                    employeeId,
-                    date: dateOnly,
-                },
+                employeeId,
+                date: dateOnly,
             },
         });
         if (!attendance) {

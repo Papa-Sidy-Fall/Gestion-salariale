@@ -6,7 +6,10 @@ export class PayRunService {
   static async createPayRun(data: {
     period: string;
     companyId: string;
+    fixedEmployeePaymentOption?: string; // Ajouter cette propriété
   }) {
+    console.log('PayRunService - createPayRun - data:', data); // Log pour débogage
+
     // Vérifier qu'il n'y a pas déjà un cycle pour cette période
     const existingPayRun = await prisma.payRun.findFirst({
       where: {
@@ -22,13 +25,15 @@ export class PayRunService {
     const payRun = await prisma.payRun.create({
       data: {
         ...data,
-        status: 'BROUILLON'
+        status: 'BROUILLON',
+        fixedEmployeePaymentOption: data.fixedEmployeePaymentOption || 'FULL_MONTH' // Assurer que l'option est définie
       },
       include: {
         company: true
       }
     });
 
+    console.log('PayRunService - createPayRun - payRun créé:', payRun); // Log pour débogage
     return payRun;
   }
 
@@ -114,53 +119,24 @@ export class PayRunService {
       throw new Error('Cycle de paie non trouvé');
     }
 
-    // Vérifier qu'il n'y a pas de bulletins approuvés pour les cycles non clôturés
-    if (payRun.status !== 'CLOTURE') {
-      const approvedPayslips = await prisma.payslip.count({
-        where: {
-          payRunId: id,
-          status: { in: ['PAYE', 'PARTIEL'] }
-        }
-      });
-
-      if (approvedPayslips > 0) {
-        throw new Error('Impossible de supprimer un cycle avec des bulletins payés');
-      }
-    }
-
-    // Pour les cycles clôturés, vérifier qu'il n'y a pas de paiements récents (derniers 30 jours)
-    if (payRun.status === 'CLOTURE') {
-      const recentPayments = await prisma.payment.count({
-        where: {
-          payslip: {
-            payRunId: id
-          },
-          date: {
-            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // 30 jours
-          }
-        }
-      });
-
-      if (recentPayments > 0) {
-        throw new Error('Impossible de supprimer un cycle clôturé avec des paiements récents (moins de 30 jours)');
-      }
-    }
-
-    // Calculer le montant total des bulletins pour rembourser le budget si nécessaire
-    const totalPaid = payRun.payslips.reduce((sum, payslip) => {
-      if (payslip.status === 'PAYE') {
+    // Calculer le montant total des bulletins payés pour rembourser le budget si nécessaire
+    const totalPaid = payRun.payslips.reduce((sum: number, payslip: { status: string; net: number }) => {
+      if (payslip.status === 'PAYE' || payslip.status === 'PARTIEL') { // Inclure PARTIEL pour le remboursement
         return sum + payslip.net;
       }
       return sum;
     }, 0);
 
-    // Si le cycle était approuvé ou clôturé, rembourser le budget
+    // Si le cycle était approuvé ou clôturé et que des montants ont été payés, rembourser le budget
     if ((payRun.status === 'APPROUVE' || payRun.status === 'CLOTURE') && totalPaid > 0) {
-      const newBudget = payRun.company.budget + totalPaid;
-      await prisma.company.update({
-        where: { id: payRun.company.id },
-        data: { budget: newBudget }
-      });
+      const company = await prisma.company.findUnique({ where: { id: payRun.company.id } });
+      if (company) {
+        const newBudget = company.budget + totalPaid;
+        await prisma.company.update({
+          where: { id: payRun.company.id },
+          data: { budget: newBudget }
+        });
+      }
     }
 
     // Supprimer d'abord les paiements liés aux bulletins
@@ -186,11 +162,12 @@ export class PayRunService {
   }
 
   static async generatePayslips(payRunId: string) {
+    console.log('PayRunService - generatePayslips - payRunId:', payRunId); // Log pour débogage
     const payRun = await prisma.payRun.findUnique({
       where: { id: payRunId },
       include: {
         company: true,
-        payslips: true
+        payslips: true,
       }
     });
 
@@ -201,6 +178,8 @@ export class PayRunService {
     if (payRun.status !== 'BROUILLON') {
       throw new Error('Impossible de générer des bulletins pour un cycle non en brouillon');
     }
+
+    console.log('PayRunService - generatePayslips - payRun:', payRun); // Log pour débogage
 
     // Récupérer tous les employés actifs de l'entreprise
     const employees = await prisma.employee.findMany({
@@ -237,40 +216,34 @@ export class PayRunService {
 
     for (const employee of employees) {
       let grossSalary = 0;
+      let daysWorked = 0;
+      let totalHours = 0;
 
-      // Calculer le salaire selon le type de contrat
-      if (employee.contractType === 'FIXE') {
-        // Salaire fixe mensuel
-        grossSalary = employee.rate;
-      } else if (employee.contractType === 'JOURNALIER') {
-        // Calculer basé sur les jours travaillés
-        const attendances = await prisma.attendance.findMany({
-          where: {
-            employeeId: employee.id,
-            date: {
-              gte: startDate,
-              lte: endDate,
-            },
-            status: AttendanceStatus.PRESENT,
+      // Calculer les jours travaillés/heures pour tous les types de contrats
+      const attendances = await prisma.attendance.findMany({
+        where: {
+          employeeId: employee.id,
+          date: {
+            gte: startDate,
+            lte: endDate,
           },
-        });
+          status: AttendanceStatus.PRESENT,
+        },
+      });
 
-        const daysWorked = attendances.length;
+      daysWorked = attendances.length;
+      totalHours = attendances.reduce((sum: number, a: { hoursWorked: number | null }) => sum + (a.hoursWorked || 0), 0);
+
+      // Calculer le salaire selon le type de contrat et l'option de paiement pour les fixes
+      if (employee.contractType === 'FIXE') {
+        if (payRun.fixedEmployeePaymentOption === 'FULL_MONTH') {
+          grossSalary = employee.rate; // Salaire fixe complet
+        } else if (payRun.fixedEmployeePaymentOption === 'DAYS_WORKED') {
+          grossSalary = daysWorked * (employee.dailyRate || (employee.rate / 30)); // Payer au prorata des jours travaillés
+        }
+      } else if (employee.contractType === 'JOURNALIER') {
         grossSalary = daysWorked * (employee.dailyRate || 0);
       } else if (employee.contractType === 'HONORAIRE') {
-        // Calculer basé sur les heures travaillées
-        const attendances = await prisma.attendance.findMany({
-          where: {
-            employeeId: employee.id,
-            date: {
-              gte: startDate,
-              lte: endDate,
-            },
-            status: AttendanceStatus.PRESENT,
-          },
-        });
-
-        const totalHours = attendances.reduce((sum, a) => sum + (a.hoursWorked || 0), 0);
         grossSalary = totalHours * (employee.hourlyRate || 0);
       }
 
@@ -321,7 +294,7 @@ export class PayRunService {
     }
 
     // Calculer le total des salaires pour ce cycle
-    const totalSalary = payRun.payslips.reduce((sum, payslip) => sum + payslip.net, 0);
+    const totalSalary = payRun.payslips.reduce((sum: number, payslip: { net: number }) => sum + payslip.net, 0);
 
     // Vérifier que le budget de l'entreprise permet de payer
     if (totalSalary > payRun.company.budget) {

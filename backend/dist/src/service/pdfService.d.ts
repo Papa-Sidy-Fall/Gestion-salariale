@@ -4,6 +4,7 @@ export declare class PDFService {
         payslip: any;
         employee: any;
         company: any;
+        cashier?: any;
     }): Promise<Uint8Array<ArrayBufferLike>>;
     private static getPaymentMethodText;
 }

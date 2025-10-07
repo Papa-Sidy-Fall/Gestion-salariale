@@ -9,13 +9,24 @@ export class EmployeeService {
     position: string;
     contractType: any;
     rate: number;
-    bankDetails?: string;
     companyId: string;
+    dailyRate: number; // Rendre non optionnel avec valeur par défaut
+    hourlyRate: number; // Rendre non optionnel avec valeur par défaut
+    email?: string;
+    phone?: string;
+    address?: string;
   }) {
+    const { companyId, ...employeeData } = data; // Extraire companyId
+
     const employee = await prisma.employee.create({
       data: {
-        ...data,
-        isActive: true
+        ...employeeData,
+        isActive: true,
+        dailyRate: employeeData.dailyRate, // dailyRate est déjà un nombre grâce au type
+        hourlyRate: employeeData.hourlyRate, // hourlyRate est déjà un nombre grâce au type
+        company: {
+          connect: { id: companyId }
+        }
       },
       include: {
         company: true

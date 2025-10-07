@@ -11,13 +11,14 @@ const prisma = new client_1.PrismaClient();
 class CompanyController {
     static async createCompany(req, res) {
         try {
-            const { name, address, phone, email, adminEmail, adminPassword } = req.body;
+            const { name, address, phone, email, adminEmail, adminPassword, color } = req.body;
             // Créer l'entreprise
             const company = await companyService_1.CompanyService.createCompany({
                 name,
                 address,
                 phone,
-                email
+                email,
+                color
             });
             // Créer automatiquement un compte Admin pour cette entreprise
             const hashedPassword = await bcrypt_1.default.hash(adminPassword, 10);

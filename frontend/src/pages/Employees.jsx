@@ -1,7 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { User, Briefcase, CreditCard, ChevronDown, UserPlus, Users, Building2, ArrowLeft, Eye, EyeOff, Edit, Trash2 } from 'lucide-react';
+
+const getTailwindColorClass = (hexColor, type = 'bg') => {
+  const colorMap = {
+    '#3B82F6': 'blue',
+    '#10B981': 'green',
+    '#8B5CF6': 'purple',
+    '#EF4444': 'red',
+    '#F97316': 'orange',
+    '#EC4899': 'pink',
+    '#6366F1': 'indigo',
+    '#14B8A6': 'teal',
+    '#06B6D4': 'cyan',
+    '#059669': 'emerald',
+    '#F59E0B': 'amber',
+    '#6B7280': 'gray',
+    '#6FA4AF': 'teal'
+  };
+
+  const baseColor = colorMap[hexColor] || 'blue';
+
+  if (type === 'bg') return `bg-${baseColor}-600`;
+  if (type === 'hoverBg') return `hover:bg-${baseColor}-700`;
+  if (type === 'text') return `text-${baseColor}-600`;
+  if (type === 'border') return `border-${baseColor}-500`;
+  if (type === 'bg-light') return `bg-${baseColor}-50`;
+  if (type === 'border-light') return `border-${baseColor}-200`;
+  if (type === 'focus-border') return `focus:border-${baseColor}-500`;
+  if (type === 'focus-ring') return `focus:ring-${baseColor}-100`;
+  return '';
+};
 
 const UserManagement = ({ companyId }) => {
   const [users, setUsers] = useState([]);
@@ -12,6 +43,8 @@ const UserManagement = ({ companyId }) => {
     confirmPassword: '',
     role: 'CAISSIER'
   });
+
+  const { companyColor } = useAuth(); // Ajout de companyColor ici
 
   useEffect(() => {
     fetchUsers();
@@ -125,12 +158,12 @@ const UserManagement = ({ companyId }) => {
         <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl transform transition-all max-h-[90vh] overflow-hidden">
             {/* Header avec fond uni */}
-            <div className="bg-blue-600 px-6 py-4 rounded-t-2xl">
+            <div className={`${getTailwindColorClass(companyColor, 'bg')} px-6 py-4 rounded-t-2xl`}>
               <h3 className="text-xl font-bold text-white flex items-center">
                 <UserPlus className="h-6 w-6 mr-2" />
                 Créer un nouveau Caissier
               </h3>
-              <p className="text-blue-100 text-sm mt-1">
+              <p className={`${getTailwindColorClass(companyColor, 'text-strong')} text-sm mt-1`}>
                 Ajoutez un utilisateur pour gérer les paiements
               </p>
             </div>
@@ -153,7 +186,7 @@ const UserManagement = ({ companyId }) => {
                       <div className="relative">
                         <input
                           type="email"
-                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                          className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${getTailwindColorClass(companyColor, 'focus-border')} ${getTailwindColorClass(companyColor, 'focus-ring')} transition-all duration-200 bg-gray-50 focus:bg-white`}
                           value={formData.email}
                           onChange={(e) => setFormData({...formData, email: e.target.value})}
                           placeholder="caissier@entreprise.com"
@@ -169,12 +202,12 @@ const UserManagement = ({ companyId }) => {
                         </label>
                         <div className="relative">
                           <input
-                            type="password"
-                            className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white"
-                            value={formData.password}
-                            onChange={(e) => setFormData({...formData, password: e.target.value})}
-                            placeholder="Min. 6 caractères"
-                          />
+                          type="password"
+                          className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${getTailwindColorClass(companyColor, 'focus-border')} ${getTailwindColorClass(companyColor, 'focus-ring')} transition-all duration-200 bg-gray-50 focus:bg-white`}
+                          value={formData.password}
+                          onChange={(e) => setFormData({...formData, password: e.target.value})}
+                          placeholder="Min. 6 caractères"
+                        />
                         </div>
                       </div>
 
@@ -185,12 +218,12 @@ const UserManagement = ({ companyId }) => {
                         </label>
                         <div className="relative">
                           <input
-                            type="password"
-                            className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white"
-                            value={formData.confirmPassword}
-                            onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
-                            placeholder="Répéter le mot de passe"
-                          />
+                          type="password"
+                          className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${getTailwindColorClass(companyColor, 'focus-border')} ${getTailwindColorClass(companyColor, 'focus-ring')} transition-all duration-200 bg-gray-50 focus:bg-white`}
+                          value={formData.confirmPassword}
+                          onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                          placeholder="Répéter le mot de passe"
+                        />
                         </div>
                       </div>
                     </div>
@@ -198,10 +231,10 @@ const UserManagement = ({ companyId }) => {
                 </div>
 
                 {/* Informations sur le rôle */}
-                <div className="bg-white rounded-xl p-4">
+                <div className={`${getTailwindColorClass(companyColor, 'bg-light')} rounded-xl p-4`}>
                   <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                      <CreditCard className="h-6 w-6 text-green-600" />
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${getTailwindColorClass(companyColor, 'bg-light')}`}>
+                      <CreditCard className={`h-6 w-6 ${getTailwindColorClass(companyColor, 'text')}`} />
                     </div>
                     <div>
                       <h4 className="text-lg font-semibold text-gray-800">Rôle: Caissier</h4>
@@ -231,7 +264,7 @@ const UserManagement = ({ companyId }) => {
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-3 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                    className={`px-6 py-3 text-sm font-semibold text-white ${getTailwindColorClass(companyColor, 'bg')} ${getTailwindColorClass(companyColor, 'hoverBg')} rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl`}
                   >
                     <UserPlus className="h-5 w-5 mr-2" />
                     Créer le caissier
@@ -247,7 +280,8 @@ const UserManagement = ({ companyId }) => {
 };
 
 const Employees = () => {
-  const { user } = useAuth();
+  const { user, companyColor } = useAuth();
+  const navigate = useNavigate(); // Ajout de useNavigate
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -261,11 +295,21 @@ const Employees = () => {
     position: '',
     contractType: 'FIXE',
     rate: '',
-    dailyRate: '',
-    hourlyRate: '',
-    bankDetails: '',
+    dailyRate: 0, // Valeur par défaut numérique
+    hourlyRate: 0, // Valeur par défaut numérique
     companyId: user?.companyId || ''
   });
+
+  const primaryColor = companyColor || '#6FA4AF';
+  const primaryBgClass = getTailwindColorClass(primaryColor, 'bg');
+  const primaryHoverBgClass = getTailwindColorClass(primaryColor, 'hoverBg');
+  const primaryTextColorClass = getTailwindColorClass(primaryColor, 'text');
+  const primaryBorderColorClass = getTailwindColorClass(primaryColor, 'border');
+  const primaryBgLightClass = getTailwindColorClass(primaryColor, 'bg-light');
+  const primaryBorderLightClass = getTailwindColorClass(primaryColor, 'border-light');
+  const primaryFocusBorderClass = getTailwindColorClass(primaryColor, 'focus-border');
+  const primaryFocusRingClass = getTailwindColorClass(primaryColor, 'focus-ring');
+
 
   useEffect(() => {
     fetchEmployees();
@@ -371,44 +415,45 @@ const Employees = () => {
     }
 
     // Validation selon le type de contrat
-    if (formData.contractType === 'FIXE' && !validateAmount(formData.rate)) {
-      showNotification('Le salaire mensuel doit être un nombre positif valide', 'error');
-      return;
-    }
-
-    if (formData.contractType === 'JOURNALIER' && !validateAmount(formData.dailyRate)) {
-      showNotification('Le taux journalier doit être un nombre positif valide', 'error');
-      return;
-    }
-
-    if (formData.contractType === 'HONORAIRE' && !validateAmount(formData.hourlyRate)) {
-      showNotification('Le taux horaire doit être un nombre positif valide', 'error');
-      return;
+    if (formData.contractType === 'FIXE') {
+      if (!validateAmount(formData.rate)) {
+        showNotification('Le salaire mensuel doit être un nombre positif valide', 'error');
+        return;
+      }
+    } else if (formData.contractType === 'JOURNALIER') {
+      if (!validateAmount(formData.dailyRate)) {
+        showNotification('Le taux journalier doit être un nombre positif valide', 'error');
+        return;
+      }
+    } else if (formData.contractType === 'HONORAIRE') {
+      if (!validateAmount(formData.hourlyRate)) {
+        showNotification('Le taux horaire doit être un nombre positif valide', 'error');
+        return;
+      }
     }
 
     try {
       let data = {
-        ...formData,
         firstName: formData.firstName,
         lastName: formData.lastName,
         position: formData.position,
         contractType: formData.contractType,
-        bankDetails: formData.bankDetails,
+        // bankDetails: formData.bankDetails, // Supprimer bankDetails
         companyId: formData.companyId
       };
 
       // Ajouter les champs de salaire selon le type de contrat
       if (formData.contractType === 'FIXE') {
         data.rate = parseFloat(formData.rate);
-        data.dailyRate = null;
-        data.hourlyRate = null;
+        data.dailyRate = 0; // Définir à 0 au lieu de null
+        data.hourlyRate = 0; // Définir à 0 au lieu de null
       } else if (formData.contractType === 'JOURNALIER') {
-        data.rate = 0; // Pas utilisé pour journalier
+        data.rate = 0;
         data.dailyRate = parseFloat(formData.dailyRate);
-        data.hourlyRate = null;
+        data.hourlyRate = 0; // Définir à 0 au lieu de null
       } else if (formData.contractType === 'HONORAIRE') {
-        data.rate = 0; // Pas utilisé pour honoraire
-        data.dailyRate = null;
+        data.rate = 0;
+        data.dailyRate = 0; // Définir à 0 au lieu de null
         data.hourlyRate = parseFloat(formData.hourlyRate);
       }
 
@@ -437,22 +482,24 @@ const Employees = () => {
       position: employee.position,
       contractType: employee.contractType,
       rate: employee.rate.toString(),
-      dailyRate: employee.dailyRate?.toString() || '',
-      hourlyRate: employee.hourlyRate?.toString() || '',
-      bankDetails: employee.bankDetails || '',
+      dailyRate: employee.dailyRate?.toString() || '0', // Assurer une chaîne numérique
+      hourlyRate: employee.hourlyRate?.toString() || '0', // Assurer une chaîne numérique
+      // bankDetails: employee.bankDetails || '', // Supprimer bankDetails
       companyId: employee.companyId
     });
     setShowModal(true);
   };
 
   const handleToggleStatus = async (id) => {
-    if (window.confirm('Êtes-vous sûr de vouloir changer le statut de cet employé ?')) {
-      try {
-        await axios.patch(`http://localhost:3000/api/employees/${id}/toggle-status`);
-        fetchEmployees();
-      } catch (error) {
-        console.error('Erreur lors du changement de statut:', error);
-      }
+    // Remplacer window.confirm par une notification
+    showNotification('Changement de statut en cours...', 'info');
+    try {
+      await axios.patch(`http://localhost:3000/api/employees/${id}/toggle-status`);
+      fetchEmployees();
+      showNotification('Statut de l\'employé mis à jour avec succès');
+    } catch (error) {
+      console.error('Erreur lors du changement de statut:', error);
+      showNotification('Erreur lors du changement de statut: ' + (error.response?.data?.error || error.message), 'error');
     }
   };
 
@@ -463,11 +510,10 @@ const Employees = () => {
       position: '',
       contractType: 'FIXE',
       rate: '',
-      dailyRate: '',
-      hourlyRate: '',
-      bankDetails: '',
-      companyId: user?.companyId || ''
-    });
+    dailyRate: 0, // Valeur par défaut numérique
+    hourlyRate: 0, // Valeur par défaut numérique
+    companyId: user?.companyId || ''
+  });
   };
 
   const openModal = () => {
@@ -533,18 +579,18 @@ const Employees = () => {
                 onClick={() => setActiveTab('employees')}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === 'employees'
-                    ? 'border-indigo-500 text-indigo-600'
+                    ? `${primaryBorderColorClass} ${primaryTextColorClass}`
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
                 Employés
               </button>
-              {user?.role === 'ADMIN' && (
+              {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
                 <button
                   onClick={() => setActiveTab('users')}
                   className={`py-2 px-1 border-b-2 font-medium text-sm ${
                     activeTab === 'users'
-                      ? 'border-indigo-500 text-indigo-600'
+                      ? `${primaryBorderColorClass} ${primaryTextColorClass}`
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
@@ -565,7 +611,7 @@ const Employees = () => {
               <div className="mb-4 flex justify-end">
                 <button
                   onClick={openModal}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                  className={`${primaryBgClass} ${primaryHoverBgClass} bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium`}
                 >
                   Ajouter un employé
                 </button>
@@ -659,9 +705,9 @@ const Employees = () => {
                 )}
               </div>
             </>
-          ) : (
+          ) : (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') ? (
             <UserManagement companyId={user?.companyId} />
-          )}
+          ) : null}
         </div>
       </div>
 

@@ -18,28 +18,9 @@ enum UserRole {
 }
 
 enum ContractType {
-  JOURNALIER
   FIXE
+  JOURNALIER
   HONORAIRE
-}
-
-enum PayRunStatus {
-  BROUILLON
-  APPROUVE
-  CLOTURE
-}
-
-enum PayslipStatus {
-  EN_ATTENTE
-  PAYE
-  PARTIEL
-}
-
-enum PaymentMethod {
-  ESPECES
-  VIREMENT
-  ORANGE_MONEY
-  WAVE
 }
 
 enum AttendanceStatus {
@@ -49,116 +30,124 @@ enum AttendanceStatus {
   MALADIE
 }
 
+enum PayslipStatus {
+  EN_ATTENTE
+  PAYE
+  PARTIEL
+}
+
+enum PayRunStatus {
+  BROUILLON
+  APPROUVE
+  CLOTURE
+}
+
+enum PaymentMethod {
+  VIREMENT
+  ESPECES
+  CHEQUE
+}
+
 model User {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   email     String   @unique
   password  String
-  role      UserRole
+  role      UserRole @default(EMPLOYEE)
   companyId String?
-  company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  company   Company? @relation(fields: [companyId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@map("users")
 }
 
 model Company {
-  id        String    @id @default(cuid())
-  name      String
+  id        String    @id @default(uuid())
+  name      String    @unique
   address   String?
   phone     String?
   email     String?
-  logo      String?   // URL ou chemin vers le logo
-  color     String?   @default("#6FA4AF") // Couleur principale de l'entreprise
-  budget    Float     @default(1000000) // Budget salarial par défaut (1M FCFA)
+  logo      String?
+  color     String?   @default("#6FA4AF")
+  budget    Float     @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   users     User[]
   employees Employee[]
   payRuns   PayRun[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  @@map("companies")
 }
 
 model Employee {
-  id           String       @id @default(cuid())
-  firstName    String
-  lastName     String
-  position     String
-  contractType ContractType
-  rate         Float        // Salaire mensuel pour FIXE
-  dailyRate    Float?       // Taux journalier pour JOURNALIER
-  hourlyRate   Float?       // Taux horaire pour HONORAIRE
-  bankDetails  String?
-  isActive     Boolean      @default(true)
-  companyId    String
-  company      Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  payslips     Payslip[]
-  attendances  Attendance[]
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-
-  @@map("employees")
-}
-
-model PayRun {
-  id        String       @id @default(cuid())
-  period    String // e.g., "2023-10"
-  status    PayRunStatus @default(BROUILLON)
-  companyId String
-  company   Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  payslips  Payslip[]
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-
-  @@map("pay_runs")
-}
-
-model Payslip {
-  id          String        @id @default(cuid())
-  employeeId  String
-  employee    Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  payRunId    String
-  payRun      PayRun        @relation(fields: [payRunId], references: [id], onDelete: Cascade)
-  gross       Float
-  deductions  Float         @default(0)
-  net         Float
-  status      PayslipStatus @default(EN_ATTENTE)
-  payments    Payment[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-
-  @@map("payslips")
-}
-
-model Payment {
-  id         String        @id @default(cuid())
-  payslipId  String
-  payslip    Payslip       @relation(fields: [payslipId], references: [id], onDelete: Cascade)
-  amount     Float
-  method     PaymentMethod
-  date       DateTime      @default(now())
-  receiptPdf String? // URL or path to PDF
-  createdAt  DateTime      @default(now())
-  updatedAt  DateTime      @updatedAt
-
-  @@map("payments")
+  id            String        @id @default(uuid())
+  firstName     String
+  lastName      String
+  email         String?       @unique
+  phone         String?
+  address       String?
+  position      String?
+  contractType  ContractType  @default(FIXE)
+  rate          Float         @default(0) // Salaire mensuel pour FIXE
+  dailyRate     Float         @default(0) // Taux journalier pour JOURNALIER
+  hourlyRate    Float         @default(0) // Taux horaire pour HONORAIRE
+  isActive      Boolean       @default(true)
+  companyId     String
+  company       Company       @relation(fields: [companyId], references: [id])
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  attendances   Attendance[]
+  payslips      Payslip[]
 }
 
 model Attendance {
-  id          String           @id @default(cuid())
+  id          String         @id @default(uuid())
   employeeId  String
-  employee    Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  date        DateTime         @db.Date
+  employee    Employee       @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  date        DateTime       @db.Date
   checkIn     DateTime?
   checkOut    DateTime?
-  hoursWorked Float?           @default(0)
+  hoursWorked Float          @default(0)
   status      AttendanceStatus @default(PRESENT)
-  notes       String?          @db.Text
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  notes       String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
-  @@map("attendances")
-  @@index([employeeId, date])
   @@unique([employeeId, date])
+}
+
+model PayRun {
+  id                       String       @id @default(uuid())
+  period                   String // Format: YYYY-MM
+  companyId                String
+  company                  Company      @relation(fields: [companyId], references: [id])
+  status                   PayRunStatus @default(BROUILLON)
+  fixedEmployeePaymentOption String       @default("FULL_MONTH") // "FULL_MONTH" ou "DAYS_WORKED"
+  createdAt                DateTime     @default(now())
+  updatedAt                DateTime     @updatedAt
+  payslips                 Payslip[]
+
+  @@unique([companyId, period])
+}
+
+model Payslip {
+  id         String       @id @default(uuid())
+  employeeId String
+  employee   Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  payRunId   String
+  payRun     PayRun       @relation(fields: [payRunId], references: [id])
+  gross      Float
+  deductions Float
+  net        Float
+  status     PayslipStatus @default(EN_ATTENTE)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  payments   Payment[]
+}
+
+model Payment {
+  id        String        @id @default(uuid())
+  payslipId String
+  payslip   Payslip       @relation(fields: [payslipId], references: [id])
+  amount    Float
+  method    PaymentMethod @default(VIREMENT)
+  date      DateTime      @default(now())
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 }

@@ -13,6 +13,7 @@ export declare class PayRunService {
             phone: string | null;
             logo: string | null;
             color: string | null;
+            budget: number;
         };
     } & {
         id: string;
@@ -21,6 +22,7 @@ export declare class PayRunService {
         updatedAt: Date;
         period: string;
         status: import(".prisma/client").$Enums.PayRunStatus;
+        fixedEmployeePaymentOption: string;
     }>;
     static getAllPayRuns(companyId?: string): Promise<({
         company: {
@@ -33,13 +35,14 @@ export declare class PayRunService {
             phone: string | null;
             logo: string | null;
             color: string | null;
+            budget: number;
         };
         payslips: ({
             employee: {
                 id: string;
                 firstName: string;
                 lastName: string;
-                position: string;
+                position: string | null;
             };
             payments: {
                 id: string;
@@ -49,7 +52,6 @@ export declare class PayRunService {
                 amount: number;
                 method: import(".prisma/client").$Enums.PaymentMethod;
                 date: Date;
-                receiptPdf: string | null;
             }[];
         } & {
             id: string;
@@ -69,6 +71,7 @@ export declare class PayRunService {
         updatedAt: Date;
         period: string;
         status: import(".prisma/client").$Enums.PayRunStatus;
+        fixedEmployeePaymentOption: string;
     })[]>;
     static getPayRunById(id: string): Promise<{
         company: {
@@ -81,13 +84,14 @@ export declare class PayRunService {
             phone: string | null;
             logo: string | null;
             color: string | null;
+            budget: number;
         };
         payslips: ({
             employee: {
                 id: string;
                 firstName: string;
                 lastName: string;
-                position: string;
+                position: string | null;
                 contractType: import(".prisma/client").$Enums.ContractType;
                 rate: number;
             };
@@ -99,7 +103,6 @@ export declare class PayRunService {
                 amount: number;
                 method: import(".prisma/client").$Enums.PaymentMethod;
                 date: Date;
-                receiptPdf: string | null;
             }[];
         } & {
             id: string;
@@ -119,6 +122,7 @@ export declare class PayRunService {
         updatedAt: Date;
         period: string;
         status: import(".prisma/client").$Enums.PayRunStatus;
+        fixedEmployeePaymentOption: string;
     }>;
     static updatePayRun(id: string, data: any): Promise<{
         company: {
@@ -131,6 +135,7 @@ export declare class PayRunService {
             phone: string | null;
             logo: string | null;
             color: string | null;
+            budget: number;
         };
     } & {
         id: string;
@@ -139,6 +144,7 @@ export declare class PayRunService {
         updatedAt: Date;
         period: string;
         status: import(".prisma/client").$Enums.PayRunStatus;
+        fixedEmployeePaymentOption: string;
     }>;
     static deletePayRun(id: string): Promise<{
         message: string;
@@ -146,17 +152,19 @@ export declare class PayRunService {
     static generatePayslips(payRunId: string): Promise<({
         employee: {
             id: string;
+            email: string | null;
             companyId: string;
             createdAt: Date;
             updatedAt: Date;
+            address: string | null;
+            phone: string | null;
             firstName: string;
             lastName: string;
-            position: string;
+            position: string | null;
             contractType: import(".prisma/client").$Enums.ContractType;
             rate: number;
-            dailyRate: number | null;
-            hourlyRate: number | null;
-            bankDetails: string | null;
+            dailyRate: number;
+            hourlyRate: number;
             isActive: boolean;
         };
     } & {
@@ -181,21 +189,24 @@ export declare class PayRunService {
             phone: string | null;
             logo: string | null;
             color: string | null;
+            budget: number;
         };
         payslips: ({
             employee: {
                 id: string;
+                email: string | null;
                 companyId: string;
                 createdAt: Date;
                 updatedAt: Date;
+                address: string | null;
+                phone: string | null;
                 firstName: string;
                 lastName: string;
-                position: string;
+                position: string | null;
                 contractType: import(".prisma/client").$Enums.ContractType;
                 rate: number;
-                dailyRate: number | null;
-                hourlyRate: number | null;
-                bankDetails: string | null;
+                dailyRate: number;
+                hourlyRate: number;
                 isActive: boolean;
             };
         } & {
@@ -216,6 +227,7 @@ export declare class PayRunService {
         updatedAt: Date;
         period: string;
         status: import(".prisma/client").$Enums.PayRunStatus;
+        fixedEmployeePaymentOption: string;
     }>;
     static closePayRun(id: string): Promise<{
         company: {
@@ -228,6 +240,7 @@ export declare class PayRunService {
             phone: string | null;
             logo: string | null;
             color: string | null;
+            budget: number;
         };
     } & {
         id: string;
@@ -236,22 +249,25 @@ export declare class PayRunService {
         updatedAt: Date;
         period: string;
         status: import(".prisma/client").$Enums.PayRunStatus;
+        fixedEmployeePaymentOption: string;
     }>;
     static getPayRunsByCompany(companyId: string): Promise<({
         payslips: ({
             employee: {
                 id: string;
+                email: string | null;
                 companyId: string;
                 createdAt: Date;
                 updatedAt: Date;
+                address: string | null;
+                phone: string | null;
                 firstName: string;
                 lastName: string;
-                position: string;
+                position: string | null;
                 contractType: import(".prisma/client").$Enums.ContractType;
                 rate: number;
-                dailyRate: number | null;
-                hourlyRate: number | null;
-                bankDetails: string | null;
+                dailyRate: number;
+                hourlyRate: number;
                 isActive: boolean;
             };
             payments: {
@@ -262,7 +278,6 @@ export declare class PayRunService {
                 amount: number;
                 method: import(".prisma/client").$Enums.PaymentMethod;
                 date: Date;
-                receiptPdf: string | null;
             }[];
         } & {
             id: string;
@@ -282,6 +297,39 @@ export declare class PayRunService {
         updatedAt: Date;
         period: string;
         status: import(".prisma/client").$Enums.PayRunStatus;
+        fixedEmployeePaymentOption: string;
     })[]>;
+    static payJournalierEmployee(employeeId: string, companyId: string): Promise<{
+        payRun: {
+            id: string;
+            companyId: string;
+            createdAt: Date;
+            updatedAt: Date;
+            period: string;
+            status: import(".prisma/client").$Enums.PayRunStatus;
+            fixedEmployeePaymentOption: string;
+        };
+        payslip: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            status: import(".prisma/client").$Enums.PayslipStatus;
+            employeeId: string;
+            payRunId: string;
+            gross: number;
+            deductions: number;
+            net: number;
+        };
+        payment: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            payslipId: string;
+            amount: number;
+            method: import(".prisma/client").$Enums.PaymentMethod;
+            date: Date;
+        };
+        amount: number;
+    }>;
 }
 //# sourceMappingURL=payRunService.d.ts.map

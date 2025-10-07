@@ -7,8 +7,42 @@ import axios from 'axios';
 import SuperAdminDashboard from './SuperAdminDashboard';
 import CashierDashboard from './CashierDashboard';
 
+const getTailwindColorClass = (hexColor, type = 'bg') => {
+  // Mapping simple pour les couleurs Tailwind les plus courantes
+  const colorMap = {
+    '#3B82F6': 'blue',    
+    '#10B981': 'green',   
+    '#8B5CF6': 'purple',  
+    '#EF4444': 'red',     
+    '#F97316': 'orange',  
+    '#EC4899': 'pink',    
+    '#6366F1': 'indigo',  
+    '#14B8A6': 'teal',    
+    '#06B6D4': 'cyan',    
+    '#059669': 'emerald', 
+    '#F59E0B': 'amber',   
+    '#6B7280': 'gray',    
+    '#6FA4AF': 'teal'     
+  };
+
+  const baseColor = colorMap[hexColor] || 'blue'; // Fallback au bleu si non trouvé
+
+  if (type === 'bg') return `bg-${baseColor}-600`;
+  if (type === 'hoverBg') return `hover:bg-${baseColor}-700`;
+  if (type === 'text') return `text-${baseColor}-400`;
+  if (type === 'border') return `border-${baseColor}-500`;
+  if (type === 'fill') return `fill-${baseColor}-500`;
+  if (type === 'ring') return `ring-${baseColor}-100`;
+  if (type === 'from') return `from-${baseColor}-50`;
+  if (type === 'to') return `to-${baseColor}-50`;
+  if (type === 'text-strong') return `text-${baseColor}-800`;
+  if (type === 'bg-light') return `bg-${baseColor}-100`;
+  if (type === 'border-light') return `border-${baseColor}-200`;
+  return '';
+};
+
 const Dashboard = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, companyColor, companyLogo } = useAuth();
   const navigate = useNavigate();
   const [selectedCompany, setSelectedCompany] = useState(null);
   const [stats, setStats] = useState({
@@ -32,7 +66,7 @@ const Dashboard = () => {
     }
 
     fetchDashboardStats();
-  }, []);
+  }, [user, companyColor]); // Ajouter companyColor aux dépendances
 
   const fetchDashboardStats = async () => {
     try {
@@ -184,16 +218,12 @@ const Dashboard = () => {
 
   // Admin ou Super Admin avec entreprise sélectionnée → Dashboard Admin
 
-  const StatCard = ({ title, value, icon: Icon, color }) => (
-    <div className={`bg-white overflow-hidden shadow rounded-lg ${color}`}>
+  const StatCard = ({ title, value, icon: Icon, bgColorClass, textColorClass, borderColorClass }) => (
+    <div className={`bg-white overflow-hidden shadow rounded-lg ${borderColorClass}`}>
       <div className="p-5">
         <div className="flex items-center">
           <div className="flex-shrink-0">
-            <Icon className="h-8 w-8 text-blue-400" />
-            
-        
-
-
+            <Icon className={`h-8 w-8 ${textColorClass}`} />
           </div>
           <div className="ml-5 w-0 flex-1">
             <dl>
@@ -210,28 +240,80 @@ const Dashboard = () => {
     </div>
   );
 
+  const getTailwindColorClass = (hexColor, type = 'bg') => {
+    // Mapping simple pour les couleurs Tailwind les plus courantes
+    const colorMap = {
+      '#3B82F6': 'blue',    // bg-blue-500, text-blue-400, border-blue-500
+      '#10B981': 'green',   // bg-green-500, text-green-400, border-green-500
+      '#8B5CF6': 'purple',  // bg-purple-500, text-purple-400, border-purple-500
+      '#EF4444': 'red',     // bg-red-500, text-red-400, border-red-500
+      '#F97316': 'orange',  // bg-orange-500, text-orange-400, border-orange-500
+      '#EC4899': 'pink',    // bg-pink-500, text-pink-400, border-pink-500
+      '#6366F1': 'indigo',  // bg-indigo-500, text-indigo-400, border-indigo-500
+      '#14B8A6': 'teal',    // bg-teal-500, text-teal-400, border-teal-500
+      '#06B6D4': 'cyan',    // bg-cyan-500, text-cyan-400, border-cyan-500
+      '#059669': 'emerald', // bg-emerald-500, text-emerald-400, border-emerald-500
+      '#F59E0B': 'amber',   // bg-amber-500, text-amber-400, border-amber-500
+      '#6B7280': 'gray',    // bg-gray-500, text-gray-400, border-gray-500
+      '#6FA4AF': 'teal'     // Couleur par défaut, mappée à teal
+    };
+
+    const baseColor = colorMap[hexColor] || 'blue'; // Fallback au bleu si non trouvé
+
+    if (type === 'bg') return `bg-${baseColor}-600`;
+    if (type === 'hoverBg') return `hover:bg-${baseColor}-700`;
+    if (type === 'text') return `text-${baseColor}-400`;
+    if (type === 'border') return `border-${baseColor}-500`;
+    if (type === 'fill') return `fill-${baseColor}-500`;
+    if (type === 'ring') return `ring-${baseColor}-100`;
+    if (type === 'from') return `from-${baseColor}-50`;
+    if (type === 'to') return `to-${baseColor}-50`;
+    if (type === 'text-strong') return `text-${baseColor}-800`;
+    if (type === 'bg-light') return `bg-${baseColor}-100`;
+    if (type === 'border-light') return `border-${baseColor}-200`;
+    return '';
+  };
+
+
+  const primaryColor = companyColor || '#6FA4AF'; // Utiliser la couleur de l'entreprise ou une couleur par défaut
+  const primaryBgClass = getTailwindColorClass(primaryColor, 'bg');
+  const primaryHoverBgClass = getTailwindColorClass(primaryColor, 'hoverBg');
+  const primaryTextColorClass = getTailwindColorClass(primaryColor, 'text');
+  const primaryBorderColorClass = getTailwindColorClass(primaryColor, 'border');
+  const primaryFillColorClass = getTailwindColorClass(primaryColor, 'fill');
+  const primaryRingColorClass = getTailwindColorClass(primaryColor, 'ring');
+  const primaryFromColorClass = getTailwindColorClass(primaryColor, 'from');
+  const primaryToColorClass = getTailwindColorClass(primaryColor, 'to');
+  const primaryTextStrongClass = getTailwindColorClass(primaryColor, 'text-strong');
+  const primaryBgLightClass = getTailwindColorClass(primaryColor, 'bg-light');
+  const primaryBorderLightClass = getTailwindColorClass(primaryColor, 'border-light');
+
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className={`shadow ${selectedCompany && user?.role === 'SUPER_ADMIN' ? 'bg-gradient-to-r from-indigo-50 to-blue-50 border-b-4' : 'bg-white'}`}
-           style={selectedCompany && user?.role === 'SUPER_ADMIN' ? { borderBottomColor: selectedCompany.color || '#6FA4AF' } : {}}>
+      <div className={`shadow ${selectedCompany && user?.role === 'SUPER_ADMIN' ? `bg-gradient-to-r ${primaryFromColorClass} ${primaryToColorClass} border-b-4` : 'bg-white'}`}
+           style={selectedCompany && user?.role === 'SUPER_ADMIN' ? { borderBottomColor: primaryColor } : {}}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               {/* Logo de l'entreprise si disponible - PLUS VISIBLE */}
-              {(selectedCompany?.logo || user?.company?.logo) && (
+              {((selectedCompany?.logo && selectedCompany.logo !== '') || (companyLogo && companyLogo !== '')) && (
                 <div className="flex items-center mr-6">
                   <img
-                    src={selectedCompany?.logo || user?.company?.logo}
+                    src={selectedCompany?.logo || companyLogo}
                     alt="Logo entreprise"
                     className="h-14 w-14 rounded-xl object-cover shadow-lg border-2 border-white"
                     style={{
-                      backgroundColor: selectedCompany?.color || user?.company?.color || '#6FA4AF',
-                      boxShadow: `0 4px 8px rgba(0,0,0,0.1), 0 0 0 2px ${selectedCompany?.color || user?.company?.color || '#6FA4AF'}20`
+                      backgroundColor: primaryColor,
+                      boxShadow: `0 4px 8px rgba(0,0,0,0.1), 0 0 0 2px ${primaryColor}20`
                     }}
                     onError={(e) => {
                       e.target.style.display = 'none';
-                      console.warn('Erreur de chargement du logo:', e.target.src);
+                      // Log l'erreur seulement si une URL de logo était présente
+                      if (e.target.src) {
+                        console.warn('Erreur de chargement du logo:', e.target.src);
+                      }
                     }}
                   />
                   {selectedCompany && user?.role === 'SUPER_ADMIN' && (
@@ -239,7 +321,7 @@ const Dashboard = () => {
                       <h2 className="text-lg font-bold text-gray-900 leading-tight">
                         {selectedCompany.name}
                       </h2>
-                      <p className="text-xs text-indigo-600 font-medium">
+                      <p className={`text-xs ${primaryBgLightClass} ${primaryTextStrongClass} font-medium`}>
                         Dashboard entreprise
                       </p>
                     </div>
@@ -257,7 +339,7 @@ const Dashboard = () => {
                 </h1>
                 {selectedCompany && user?.role === 'SUPER_ADMIN' && (
                   <div className="flex items-center mt-1">
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 text-indigo-800 border border-indigo-200">
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${primaryBgLightClass} ${primaryTextStrongClass} ${primaryBorderLightClass}`}>
                       <Building2 className="h-4 w-4 mr-1" />
                       Entreprise sélectionnée: {selectedCompany.name}
                     </span>
@@ -275,16 +357,50 @@ const Dashboard = () => {
                   >
                     Entreprises
                   </button>
-                  {selectedCompany && (
+                  {selectedCompany ? (
+                    <>
+                      <button
+                        onClick={() => navigate('/employees')}
+                        className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                      >
+                        Employés
+                      </button>
+                      <button
+                        onClick={() => navigate('/payruns')}
+                        className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                      >
+                        Cycles de paie
+                      </button>
+                      <button
+                        onClick={() => navigate('/payments')}
+                        className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                      >
+                        Paiements
+                      </button>
+                      <button
+                        onClick={() => navigate('/attendances')}
+                        className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                      >
+                        Pointages
+                      </button>
+                      <button
+                        onClick={() => {
+                          localStorage.removeItem('selectedCompany');
+                          setSelectedCompany(null);
+                          window.location.reload();
+                        }}
+                        className="text-orange-600 hover:text-orange-900 px-3 py-2 rounded-md text-sm font-medium"
+                      >
+                        Vue globale
+                      </button>
+                    </>
+                  ) : (
+                    // No selected company, only show "Entreprises" and "Vue globale" (if applicable)
                     <button
-                      onClick={() => {
-                        localStorage.removeItem('selectedCompany');
-                        setSelectedCompany(null);
-                        window.location.reload();
-                      }}
-                      className="text-orange-600 hover:text-orange-900 px-3 py-2 rounded-md text-sm font-medium"
+                      onClick={() => navigate('/companies')}
+                      className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                     >
-                      Vue globale
+                      Entreprises
                     </button>
                   )}
                 </>
@@ -303,6 +419,18 @@ const Dashboard = () => {
                     className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
                   >
                     Cycles de paie
+                  </button>
+                  <button
+                    onClick={() => navigate('/payments')}
+                    className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    Paiements
+                  </button>
+                  <button
+                    onClick={() => navigate('/attendances')}
+                    className="text-gray-700 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
+                  >
+                    Pointages
                   </button>
                 </>
               )}
@@ -352,7 +480,7 @@ const Dashboard = () => {
                   <div className="text-center">
                     <button
                       onClick={() => navigate('/companies')}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-md text-lg font-medium"
+                      className={`${primaryBgClass} ${primaryHoverBgClass} text-white px-6 py-3 rounded-md text-lg font-medium`}
                     >
                       Accéder à la gestion des entreprises
                     </button>
@@ -368,18 +496,9 @@ const Dashboard = () => {
             <>
               {/* Indicateur d'entreprise sélectionnée pour Super Admin */}
               {selectedCompany && user?.role === 'SUPER_ADMIN' && (
-                <div className="mb-6 bg-gradient-to-r from-indigo-50 to-blue-50 border-l-4 border-indigo-500 p-4 rounded-lg">
+                <div className={`mb-6 bg-gradient-to-r ${primaryFromColorClass} ${primaryToColorClass} border-l-4 ${primaryBorderColorClass} p-4 rounded-lg`}>
                   <div className="flex items-center">
                     <div className="flex-shrink-0">
-                      <img
-                        src={selectedCompany.logo}
-                        alt="Logo entreprise"
-                        className="h-12 w-12 rounded-lg object-cover border-2 border-white shadow-md"
-                        style={{ backgroundColor: selectedCompany.color || '#6FA4AF' }}
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                        }}
-                      />
                     </div>
                     <div className="ml-4">
                       <h2 className="text-lg font-bold text-gray-900">
@@ -393,7 +512,7 @@ const Dashboard = () => {
                             setSelectedCompany(null);
                             window.location.reload();
                           }}
-                          className="ml-2 text-indigo-600 hover:text-indigo-800 font-medium underline"
+                          className={`ml-2 ${primaryTextStrongClass} hover:${primaryTextStrongClass} font-medium underline`}
                         >
                           Retour à la vue globale
                         </button>
@@ -409,25 +528,29 @@ const Dashboard = () => {
                   title="Employés actifs"
                   value={stats.totalEmployees}
                   icon={Users}
-                  color="border-l-4 border-blue-500"
+                  textColorClass={primaryTextColorClass}
+                  borderColorClass={`border-l-4 ${primaryBorderColorClass}`}
                 />
                 <StatCard
                   title="Masse salariale"
                   value={`${stats.totalSalary.toLocaleString()} FCFA`}
                   icon={DollarSign}
-                  color="border-l-4 border-green-500"
+                  textColorClass={primaryTextColorClass}
+                  borderColorClass={`border-l-4 ${primaryBorderColorClass}`}
                 />
                 <StatCard
                   title="Montant payé"
                   value={`${stats.paidAmount.toLocaleString()} FCFA`}
                   icon={Check}
-                  color="border-l-4 border-indigo-500"
+                  textColorClass={primaryTextColorClass}
+                  borderColorClass={`border-l-4 ${primaryBorderColorClass}`}
                 />
                 <StatCard
                   title="Montant restant"
                   value={`${stats.pendingAmount.toLocaleString()} FCFA`}
                   icon={Clock}
-                  color="border-l-4 border-yellow-500"
+                  textColorClass={primaryTextColorClass}
+                  borderColorClass={`border-l-4 ${primaryBorderColorClass}`}
                 />
               </div>
 
@@ -442,7 +565,7 @@ const Dashboard = () => {
                 <div className="h-64">
                   {chartLoading ? (
                     <div className="flex items-center justify-center h-full">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+                      <div className={`animate-spin rounded-full h-12 w-12 border-b-2 ${primaryBorderColorClass}`}></div>
                       <span className="ml-3 text-gray-600">Chargement des données...</span>
                     </div>
                   ) : salaryEvolution.length > 0 && salaryEvolution.some(item => item.amount > 0) ? (
@@ -458,10 +581,10 @@ const Dashboard = () => {
                         <Line
                           type="monotone"
                           dataKey="amount"
-                          stroke="#3B82F6"
+                          stroke={primaryColor}
                           strokeWidth={3}
-                          dot={{ fill: '#3B82F6', strokeWidth: 2, r: 6 }}
-                          activeDot={{ r: 8, stroke: '#3B82F6', strokeWidth: 2 }}
+                          dot={{ fill: primaryColor, strokeWidth: 2, r: 6 }}
+                          activeDot={{ r: 8, stroke: primaryColor, strokeWidth: 2 }}
                         />
                       </LineChart>
                     </ResponsiveContainer>
@@ -519,25 +642,25 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <button
                 onClick={() => navigate('/payruns')}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                className={`${primaryBgClass} ${primaryHoverBgClass} bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium`}
               >
-                Gérer cycles de paie
+                Gérer cycles de paie 
               </button>
               <button
                 onClick={() => navigate('/employees')}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                className={`${primaryBgClass} ${primaryHoverBgClass} bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium`}
               >
                 Gérer employés
               </button>
               <button
                 onClick={() => navigate('/payruns?tab=generate')}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                className={`${primaryBgClass} ${primaryHoverBgClass} bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium`}
               >
                 Générer bulletins
               </button>
               <button
                 onClick={() => navigate('/payments')}
-                className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                className={`${primaryBgClass} ${primaryHoverBgClass} bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium`}
               >
                 Voir paiements
               </button>
@@ -560,7 +683,7 @@ const Dashboard = () => {
                   <div className="text-center">
                     <button
                       onClick={() => navigate('/payments')}
-                      className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-md text-lg font-medium"
+                      className={`${primaryBgClass} ${primaryHoverBgClass} text-white px-6 py-3 rounded-md text-lg font-medium`}
                     >
                       Accéder aux paiements
                     </button>

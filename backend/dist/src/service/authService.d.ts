@@ -28,6 +28,7 @@ export declare class AuthService {
                 phone: string | null;
                 logo: string | null;
                 color: string | null;
+                budget: number;
             } | null;
         };
         token: string;
@@ -43,6 +44,7 @@ export declare class AuthService {
             phone: string | null;
             logo: string | null;
             color: string | null;
+            budget: number;
         } | null;
     } & {
         id: string;

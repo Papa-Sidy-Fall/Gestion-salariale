@@ -4,9 +4,100 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Building2, Users, UserPlus, ArrowLeft, User, Briefcase, CreditCard, ChevronDown, Edit, Trash2, Mail, Lock, Eye, EyeOff, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
+const getTailwindColorClass = (hexColor, type = 'bg') => {
+  const colorMap = {
+    '#3B82F6': 'blue',
+    '#10B981': 'green',
+    '#8B5CF6': 'purple',
+    '#EF4444': 'red',
+    '#F97316': 'orange',
+    '#EC4899': 'pink',
+    '#6366F1': 'indigo',
+    '#14B8A6': 'teal',
+    '#06B6D4': 'cyan',
+    '#059669': 'emerald',
+    '#F59E0B': 'amber',
+    '#6B7280': 'gray',
+    '#6FA4AF': 'teal'
+  };
+
+  const baseColor = colorMap[hexColor] || 'blue';
+
+  if (type === 'bg') return `bg-${baseColor}-600`;
+  if (type === 'hoverBg') return `hover:bg-${baseColor}-700`;
+  if (type === 'text') return `text-${baseColor}-600`;
+  if (type === 'border') return `border-${baseColor}-500`;
+  if (type === 'bg-light') return `bg-${baseColor}-50`;
+  if (type === 'border-light') return `border-${baseColor}-200`;
+  if (type === 'focus-border') return `focus:border-${baseColor}-500`;
+  if (type === 'focus-ring') return `focus:ring-${baseColor}-100`;
+  return '';
+};
+
+const allColors = [
+  { name: 'Bleu', value: '#3B82F6', bg: 'bg-blue-500' },
+  { name: 'Vert', value: '#10B981', bg: 'bg-green-500' },
+  { name: 'Violet', value: '#8B5CF6', bg: 'bg-purple-500' },
+  { name: 'Rouge', value: '#EF4444', bg: 'bg-red-500' },
+  { name: 'Orange', value: '#F97316', bg: 'bg-orange-500' },
+  { name: 'Rose', value: '#EC4899', bg: 'bg-pink-500' },
+  { name: 'Indigo', value: '#6366F1', bg: 'bg-indigo-500' },
+  { name: 'Teal', value: '#14B8A6', bg: 'bg-teal-500' },
+  { name: 'Cyan', value: '#06B6D4', bg: 'bg-cyan-500' },
+  { name: 'Emeraude', value: '#059669', bg: 'bg-emerald-500' },
+  { name: 'Ambre', value: '#F59E0B', bg: 'bg-amber-500' },
+  { name: 'Gris', value: '#6B7280', bg: 'bg-gray-500' }
+];
+
+const defaultColors = [
+  { name: 'Bleu', value: '#3B82F6', bg: 'bg-blue-500' },
+  { name: 'Vert', value: '#10B981', bg: 'bg-green-500' },
+  { name: 'Orange', value: '#F97316', bg: 'bg-orange-500' },
+];
+
 const Companies = () => {
-  const { user } = useAuth();
+  const { user, companyColor } = useAuth();
   const navigate = useNavigate();
+
+  const getTailwindColorClass = (hexColor, type = 'bg') => {
+    const colorMap = {
+      '#3B82F6': 'blue',
+      '#10B981': 'green',
+      '#8B5CF6': 'purple',
+      '#EF4444': 'red',
+      '#F97316': 'orange',
+      '#EC4899': 'pink',
+      '#6366F1': 'indigo',
+      '#14B8A6': 'teal',
+      '#06B6D4': 'cyan',
+      '#059669': 'emerald',
+      '#F59E0B': 'amber',
+      '#6B7280': 'gray',
+      '#6FA4AF': 'teal'
+    };
+
+    const baseColor = colorMap[hexColor] || 'blue';
+
+    if (type === 'bg') return `bg-${baseColor}-600`;
+    if (type === 'hoverBg') return `hover:bg-${baseColor}-700`;
+    if (type === 'text') return `text-${baseColor}-600`;
+    if (type === 'border') return `border-${baseColor}-500`;
+    if (type === 'bg-light') return `bg-${baseColor}-50`;
+    if (type === 'border-light') return `border-${baseColor}-200`;
+    if (type === 'focus-border') return `focus:border-${baseColor}-500`;
+    if (type === 'focus-ring') return `focus:ring-${baseColor}-100`;
+    return '';
+  };
+
+  const primaryColor = companyColor || '#6FA4AF';
+  const primaryBgClass = getTailwindColorClass(primaryColor, 'bg');
+  const primaryHoverBgClass = getTailwindColorClass(primaryColor, 'hoverBg');
+  const primaryTextColorClass = getTailwindColorClass(primaryColor, 'text');
+  const primaryBorderColorClass = getTailwindColorClass(primaryColor, 'border');
+  const primaryBgLightClass = getTailwindColorClass(primaryColor, 'bg-light');
+  const primaryBorderLightClass = getTailwindColorClass(primaryColor, 'border-light');
+  const primaryFocusBorderClass = getTailwindColorClass(primaryColor, 'focus-border');
+  const primaryFocusRingClass = getTailwindColorClass(primaryColor, 'focus-ring');
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -39,7 +130,7 @@ const Companies = () => {
     phone: '',
     email: '',
     logo: null,
-    color: '#6FA4AF',
+    color: defaultColors[0].value, // Default to the first color in defaultColors
     adminEmail: '',
     adminPassword: '',
     confirmPassword: ''
@@ -381,12 +472,12 @@ const Companies = () => {
             </div>
             {user?.role === 'SUPER_ADMIN' && (
               <div className="flex items-center">
-                <button
-                  onClick={() => setShowModal(true)}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-                >
-                  Nouvelle entreprise
-                </button>
+                    <button
+                      onClick={() => setShowModal(true)}
+                      className={`${primaryBgClass} ${primaryHoverBgClass} text-white px-4 py-2 rounded-md text-sm font-medium`}
+                    >
+                      Nouvelle entreprise
+                    </button>
               </div>
             )}
           </div>
@@ -445,7 +536,7 @@ const Companies = () => {
                   </h3>
                   <button
                     onClick={() => setShowEmployeeModal(true)}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center"
+                    className={`${primaryBgClass} ${primaryHoverBgClass} text-white px-4 py-2 rounded-md text-sm font-medium flex items-center`}
                   >
                     <UserPlus className="h-4 w-4 mr-2" />
                     Ajouter employé
@@ -498,7 +589,7 @@ const Companies = () => {
                   </h3>
                   <button
                     onClick={() => setShowUserModal(true)}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center"
+                    className={`${primaryBgClass} ${primaryHoverBgClass} text-white px-4 py-2 rounded-md text-sm font-medium flex items-center`}
                   >
                     <Users className="h-4 w-4 mr-2" />
                     Ajouter utilisateur
@@ -611,12 +702,12 @@ const Companies = () => {
                 <div className="text-center py-12">
                   <p className="text-gray-500">Aucune entreprise trouvée.</p>
                   {user?.role === 'SUPER_ADMIN' && (
-                    <button
-                      onClick={() => setShowModal(true)}
-                      className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-                    >
-                      Créer la première entreprise
-                    </button>
+                  <button
+                    onClick={() => setShowModal(true)}
+                    className={`mt-4 ${primaryBgClass} ${primaryHoverBgClass} text-white px-4 py-2 rounded-md text-sm font-medium`}
+                  >
+                    Créer la première entreprise
+                  </button>
                   )}
                 </div>
               )}
@@ -630,7 +721,7 @@ const Companies = () => {
         <div className="fixed inset-0  bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl transform transition-all max-h-[90vh] overflow-hidden">
             {/* Header avec fond uni */}
-            <div className="bg-blue-600 px-6 py-4 rounded-t-2xl">
+            <div className={`${getTailwindColorClass(formData.color, 'bg')} px-6 py-4 rounded-t-2xl`}>
               <h3 className="text-xl font-bold text-white flex items-center">
                 {editingCompany ? (
                   <>
@@ -644,7 +735,7 @@ const Companies = () => {
                   </>
                 )}
               </h3>
-              <p className="text-blue-100 text-sm mt-1">
+              <p className={`${getTailwindColorClass(formData.color, 'text-strong')} text-sm mt-1`}>
                 {editingCompany ? 'Mettez à jour les informations' : 'Configurez votre nouvelle entreprise'}
               </p>
             </div>
@@ -660,7 +751,7 @@ const Companies = () => {
                   <div className="relative">
                     <input
                       type="text"
-                      className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                      className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${getTailwindColorClass(formData.color, 'focus-border')} ${getTailwindColorClass(formData.color, 'focus-ring')} transition-all duration-200 bg-gray-50 focus:bg-white`}
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
                       placeholder="Ex: Tech Solutions SARL"
@@ -677,7 +768,7 @@ const Companies = () => {
                   <div className="relative">
                     <textarea
                       rows={3}
-                      className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white resize-none"
+                      className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${getTailwindColorClass(formData.color, 'focus-border')} ${getTailwindColorClass(formData.color, 'focus-ring')} transition-all duration-200 bg-gray-50 focus:bg-white resize-none`}
                       value={formData.address}
                       onChange={(e) => setFormData({...formData, address: e.target.value})}
                       placeholder="Adresse complète de l'entreprise"
@@ -695,7 +786,7 @@ const Companies = () => {
                     <div className="relative">
                       <input
                         type="tel"
-                        className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                        className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${getTailwindColorClass(formData.color, 'focus-border')} ${getTailwindColorClass(formData.color, 'focus-ring')} transition-all duration-200 bg-gray-50 focus:bg-white`}
                         value={formData.phone}
                         onChange={(e) => setFormData({...formData, phone: e.target.value})}
                         placeholder="+221 XX XXX XX XX"
@@ -711,7 +802,7 @@ const Companies = () => {
                     <div className="relative">
                       <input
                         type="email"
-                        className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                        className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${getTailwindColorClass(formData.color, 'focus-border')} ${getTailwindColorClass(formData.color, 'focus-ring')} transition-all duration-200 bg-gray-50 focus:bg-white`}
                         value={formData.email}
                         onChange={(e) => setFormData({...formData, email: e.target.value})}
                         placeholder="contact@entreprise.com"
@@ -730,7 +821,7 @@ const Companies = () => {
                       <input
                         type="file"
                         accept="image/*"
-                        className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${getTailwindColorClass(formData.color, 'focus-border')} ${getTailwindColorClass(formData.color, 'focus-ring')} transition-all duration-200 bg-gray-50 focus:bg-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold ${getTailwindColorClass(formData.color, 'bg-light')} ${getTailwindColorClass(formData.color, 'text')} hover:file:bg-blue-100`}
                         onChange={(e) => setFormData({...formData, logo: e.target.files[0]})}
                       />
                       <p className="text-xs text-gray-500 mt-1">Formats acceptés: JPG, PNG, GIF (max 5MB)</p>
@@ -744,20 +835,7 @@ const Companies = () => {
                     <div className="space-y-3">
                       {/* Sélecteur de couleurs prédéfinies */}
                       <div className="grid grid-cols-6 gap-2">
-                        {[
-                          { name: 'Bleu', value: '#3B82F6', bg: 'bg-blue-500' },
-                          { name: 'Vert', value: '#10B981', bg: 'bg-green-500' },
-                          { name: 'Violet', value: '#8B5CF6', bg: 'bg-purple-500' },
-                          { name: 'Rouge', value: '#EF4444', bg: 'bg-red-500' },
-                          { name: 'Orange', value: '#F97316', bg: 'bg-orange-500' },
-                          { name: 'Rose', value: '#EC4899', bg: 'bg-pink-500' },
-                          { name: 'Indigo', value: '#6366F1', bg: 'bg-indigo-500' },
-                          { name: 'Teal', value: '#14B8A6', bg: 'bg-teal-500' },
-                          { name: 'Cyan', value: '#06B6D4', bg: 'bg-cyan-500' },
-                          { name: 'Emeraude', value: '#059669', bg: 'bg-emerald-500' },
-                          { name: 'Ambre', value: '#F59E0B', bg: 'bg-amber-500' },
-                          { name: 'Gris', value: '#6B7280', bg: 'bg-gray-500' }
-                        ].map((color) => (
+                        {(editingCompany ? allColors : defaultColors).map((color) => (
                           <button
                             key={color.value}
                             type="button"
@@ -776,16 +854,18 @@ const Companies = () => {
                         ))}
                       </div>
 
-                      {/* Sélecteur personnalisé */}
-                      <div className="flex items-center space-x-3">
-                        <span className="text-sm text-gray-600">Ou couleur personnalisée:</span>
-                        <input
-                          type="color"
-                          className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
-                          value={formData.color}
-                          onChange={(e) => setFormData({...formData, color: e.target.value})}
-                        />
-                      </div>
+                      {/* Sélecteur personnalisé (visible uniquement en mode édition) */}
+                      {editingCompany && (
+                        <div className="flex items-center space-x-3">
+                          <span className="text-sm text-gray-600">Ou couleur personnalisée:</span>
+                          <input
+                            type="color"
+                            className="w-12 h-8 border border-gray-300 rounded cursor-pointer"
+                            value={formData.color}
+                            onChange={(e) => setFormData({...formData, color: e.target.value})}
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -793,8 +873,8 @@ const Companies = () => {
                 {!editingCompany && (
                   <>
                     {/* Section Admin avec style spécial */}
-                    <div className="border-t-2 border-blue-200 pt-6 mt-8">
-                      <div className="bg-blue-600 rounded-xl p-4 mb-6">
+                    <div className={`border-t-2 ${getTailwindColorClass(formData.color, 'border-light')} pt-6 mt-8`}>
+                      <div className={`${getTailwindColorClass(formData.color, 'bg')} rounded-xl p-4 mb-6`}>
                         <h4 className="text-lg font-bold text-white mb-2 flex items-center">
                           <User className="h-5 w-5 mr-2" />
                           Créer le compte Administrateur
@@ -813,7 +893,7 @@ const Companies = () => {
                           <div className="relative">
                             <input
                               type="email"
-                              className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                              className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${getTailwindColorClass(formData.color, 'focus-border')} ${getTailwindColorClass(formData.color, 'focus-ring')} transition-all duration-200 bg-gray-50 focus:bg-white`}
                               value={formData.adminEmail}
                               onChange={(e) => setFormData({...formData, adminEmail: e.target.value})}
                               placeholder="admin@entreprise.com"
@@ -830,7 +910,7 @@ const Companies = () => {
                             <div className="relative">
                               <input
                                 type="password"
-                                className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                                className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${getTailwindColorClass(formData.color, 'focus-border')} ${getTailwindColorClass(formData.color, 'focus-ring')} transition-all duration-200 bg-gray-50 focus:bg-white`}
                                 value={formData.adminPassword}
                                 onChange={(e) => setFormData({...formData, adminPassword: e.target.value})}
                                 placeholder="Min. 6 caractères"
@@ -846,7 +926,7 @@ const Companies = () => {
                             <div className="relative">
                               <input
                                 type="password"
-                                className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                                className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${getTailwindColorClass(formData.color, 'focus-border')} ${getTailwindColorClass(formData.color, 'focus-ring')} transition-all duration-200 bg-gray-50 focus:bg-white`}
                                 value={formData.confirmPassword}
                                 onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
                                 placeholder="Répéter le mot de passe"
@@ -874,7 +954,7 @@ const Companies = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-3 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                    className={`px-6 py-3 text-sm font-semibold text-white ${getTailwindColorClass(formData.color, 'bg')} ${getTailwindColorClass(formData.color, 'hoverBg')} rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl`}
                   >
                     {editingCompany ? (
                       <>
@@ -900,12 +980,12 @@ const Companies = () => {
         <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl transform transition-all max-h-[90vh] overflow-hidden">
             {/* Header avec fond uni */}
-            <div className="bg-blue-600 px-6 py-4 rounded-t-2xl">
+            <div className={`${getTailwindColorClass(selectedCompany.color, 'bg')} px-6 py-4 rounded-t-2xl`}>
               <h3 className="text-xl font-bold text-white flex items-center">
                 <UserPlus className="h-6 w-6 mr-2" />
                 Créer un utilisateur
               </h3>
-              <p className="text-blue-100 text-sm mt-1">
+              <p className={`${getTailwindColorClass(selectedCompany.color, 'text-strong')} text-sm mt-1`}>
                 pour {selectedCompany.name}
               </p>
             </div>
@@ -928,12 +1008,11 @@ const Companies = () => {
                       <div className="relative">
                         <input
                           type="email"
-                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                          className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${getTailwindColorClass(selectedCompany.color, 'focus-border')} ${getTailwindColorClass(selectedCompany.color, 'focus-ring')} transition-all duration-200 bg-gray-50 focus:bg-white`}
                           value={userFormData.email}
-                          onChange={(e) => setUserFormData({...userFormData, email: e.target.value})}
-                          placeholder="utilisateur@entreprise.com"
-                          required
-                        />
+                      onChange={(e) => setUserFormData({...userFormData, email: e.target.value})}
+                      placeholder="utilisateur@entreprise.com"
+                    />
                       </div>
                     </div>
 
@@ -946,12 +1025,11 @@ const Companies = () => {
                         <div className="relative">
                           <input
                             type="password"
-                            className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                            className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${getTailwindColorClass(selectedCompany.color, 'focus-border')} ${getTailwindColorClass(selectedCompany.color, 'focus-ring')} transition-all duration-200 bg-gray-50 focus:bg-white`}
                             value={userFormData.password}
-                            onChange={(e) => setUserFormData({...userFormData, password: e.target.value})}
-                            placeholder="Min. 6 caractères"
-                            required
-                          />
+                      onChange={(e) => setUserFormData({...userFormData, password: e.target.value})}
+                      placeholder="Min. 6 caractères"
+                    />
                         </div>
                       </div>
 
@@ -963,12 +1041,11 @@ const Companies = () => {
                         <div className="relative">
                           <input
                             type="password"
-                            className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                            className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${getTailwindColorClass(selectedCompany.color, 'focus-border')} ${getTailwindColorClass(selectedCompany.color, 'focus-ring')} transition-all duration-200 bg-gray-50 focus:bg-white`}
                             value={userFormData.confirmPassword}
-                            onChange={(e) => setUserFormData({...userFormData, confirmPassword: e.target.value})}
-                            placeholder="Répéter le mot de passe"
-                            required
-                          />
+                      onChange={(e) => setUserFormData({...userFormData, confirmPassword: e.target.value})}
+                      placeholder="Répéter le mot de passe"
+                    />
                         </div>
                       </div>
                     </div>
@@ -980,11 +1057,10 @@ const Companies = () => {
                       </label>
                       <div className="relative">
                         <select
-                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white appearance-none"
+                          className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${getTailwindColorClass(selectedCompany.color, 'focus-border')} ${getTailwindColorClass(selectedCompany.color, 'focus-ring')} transition-all duration-200 bg-gray-50 focus:bg-white appearance-none`}
                           value={userFormData.role}
-                          onChange={(e) => setUserFormData({...userFormData, role: e.target.value})}
-                          required
-                        >
+                      onChange={(e) => setUserFormData({...userFormData, role: e.target.value})}
+                    >
                           <option value="ADMIN">👑 Administrateur</option>
                           <option value="CAISSIER">💳 Caissier</option>
                         </select>
@@ -999,19 +1075,19 @@ const Companies = () => {
                 {/* Informations sur le rôle */}
                 <div className={`rounded-xl p-4 ${
                   userFormData.role === 'ADMIN'
-                    ? 'bg-purple-50'
-                    : 'bg-green-50'
+                    ? getTailwindColorClass(selectedCompany.color, 'bg-light')
+                    : getTailwindColorClass(selectedCompany.color, 'bg-light')
                 }`}>
                   <div className="flex items-center space-x-3">
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
                       userFormData.role === 'ADMIN'
-                        ? 'bg-purple-100'
-                        : 'bg-green-100'
+                        ? getTailwindColorClass(selectedCompany.color, 'bg-light')
+                        : getTailwindColorClass(selectedCompany.color, 'bg-light')
                     }`}>
                       {userFormData.role === 'ADMIN' ? (
-                        <User className="h-6 w-6 text-purple-600" />
+                        <User className={`h-6 w-6 ${getTailwindColorClass(selectedCompany.color, 'text')}`} />
                       ) : (
-                        <CreditCard className="h-6 w-6 text-green-600" />
+                        <CreditCard className={`h-6 w-6 ${getTailwindColorClass(selectedCompany.color, 'text')}`} />
                       )}
                     </div>
                     <div>
@@ -1047,7 +1123,7 @@ const Companies = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-3 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                    className={`px-6 py-3 text-sm font-semibold text-white ${getTailwindColorClass(selectedCompany.color, 'bg')} ${getTailwindColorClass(selectedCompany.color, 'hoverBg')} rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl`}
                   >
                     <UserPlus className="h-5 w-5 mr-2" />
                     Créer l'utilisateur
@@ -1064,12 +1140,12 @@ const Companies = () => {
         <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl transform transition-all max-h-[90vh] overflow-hidden">
             {/* Header avec fond uni */}
-            <div className="bg-blue-600 px-6 py-4 rounded-t-2xl">
+            <div className={`${getTailwindColorClass(selectedCompany.color, 'bg')} px-6 py-4 rounded-t-2xl`}>
               <h3 className="text-xl font-bold text-white flex items-center">
                 <UserPlus className="h-6 w-6 mr-2" />
                 Ajouter un employé
               </h3>
-              <p className="text-blue-100 text-sm mt-1">
+              <p className={`${getTailwindColorClass(selectedCompany.color, 'text-strong')} text-sm mt-1`}>
                 à {selectedCompany.name}
               </p>
             </div>
@@ -1090,11 +1166,10 @@ const Companies = () => {
                       <div className="relative">
                         <input
                           type="text"
-                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                          className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${getTailwindColorClass(selectedCompany.color, 'focus-border')} ${getTailwindColorClass(selectedCompany.color, 'focus-ring')} transition-all duration-200 bg-gray-50 focus:bg-white`}
                           value={employeeFormData.firstName}
                           onChange={(e) => setEmployeeFormData({...employeeFormData, firstName: e.target.value})}
                           placeholder="Jean"
-                          required
                         />
                       </div>
                     </div>
@@ -1105,11 +1180,10 @@ const Companies = () => {
                       <div className="relative">
                         <input
                           type="text"
-                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                          className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${getTailwindColorClass(selectedCompany.color, 'focus-border')} ${getTailwindColorClass(selectedCompany.color, 'focus-ring')} transition-all duration-200 bg-gray-50 focus:bg-white`}
                           value={employeeFormData.lastName}
                           onChange={(e) => setEmployeeFormData({...employeeFormData, lastName: e.target.value})}
                           placeholder="Dupont"
-                          required
                         />
                       </div>
                     </div>
@@ -1131,11 +1205,10 @@ const Companies = () => {
                       <div className="relative">
                         <input
                           type="text"
-                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                          className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${getTailwindColorClass(selectedCompany.color, 'focus-border')} ${getTailwindColorClass(selectedCompany.color, 'focus-ring')} transition-all duration-200 bg-gray-50 focus:bg-white`}
                           value={employeeFormData.position}
                           onChange={(e) => setEmployeeFormData({...employeeFormData, position: e.target.value})}
                           placeholder="Développeur Full Stack"
-                          required
                         />
                       </div>
                     </div>
@@ -1148,10 +1221,9 @@ const Companies = () => {
                         </label>
                         <div className="relative">
                           <select
-                            className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white appearance-none"
+                            className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${getTailwindColorClass(selectedCompany.color, 'focus-border')} ${getTailwindColorClass(selectedCompany.color, 'focus-ring')} transition-all duration-200 bg-gray-50 focus:bg-white appearance-none`}
                             value={employeeFormData.contractType}
                             onChange={(e) => setEmployeeFormData({...employeeFormData, contractType: e.target.value})}
-                            required
                           >
                             <option value="FIXE">Fixe</option>
                             <option value="JOURNALIER">Journalier</option>
@@ -1171,11 +1243,10 @@ const Companies = () => {
                           <input
                             type="number"
                             step="0.01"
-                            className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                            className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${getTailwindColorClass(selectedCompany.color, 'focus-border')} ${getTailwindColorClass(selectedCompany.color, 'focus-ring')} transition-all duration-200 bg-gray-50 focus:bg-white`}
                             value={employeeFormData.rate}
                             onChange={(e) => setEmployeeFormData({...employeeFormData, rate: e.target.value})}
                             placeholder="150000"
-                            required
                           />
                         </div>
                       </div>
@@ -1196,7 +1267,7 @@ const Companies = () => {
                     </label>
                     <div className="relative">
                       <textarea
-                        className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 bg-gray-50 focus:bg-white resize-none"
+                        className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${getTailwindColorClass(selectedCompany.color, 'focus-border')} ${getTailwindColorClass(selectedCompany.color, 'focus-ring')} transition-all duration-200 bg-gray-50 focus:bg-white resize-none`}
                         rows="2"
                         value={employeeFormData.bankDetails}
                         onChange={(e) => setEmployeeFormData({...employeeFormData, bankDetails: e.target.value})}
@@ -1227,7 +1298,7 @@ const Companies = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-3 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                    className={`px-6 py-3 text-sm font-semibold text-white ${getTailwindColorClass(selectedCompany.color, 'bg')} ${getTailwindColorClass(selectedCompany.color, 'hoverBg')} rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl`}
                   >
                     <UserPlus className="h-5 w-5 mr-2" />
                     Ajouter l'employé

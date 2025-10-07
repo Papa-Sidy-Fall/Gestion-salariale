@@ -4,8 +4,48 @@ import axios from 'axios';
 import { DollarSign, Check } from 'lucide-react';
 
 const Payments = () => {
-  const { user } = useAuth();
+  const { user, companyColor } = useAuth();
   const [payments, setPayments] = useState([]);
+
+  const getTailwindColorClass = (hexColor, type = 'bg') => {
+    const colorMap = {
+      '#3B82F6': 'blue',
+      '#10B981': 'green',
+      '#8B5CF6': 'purple',
+      '#EF4444': 'red',
+      '#F97316': 'orange',
+      '#EC4899': 'pink',
+      '#6366F1': 'indigo',
+      '#14B8A6': 'teal',
+      '#06B6D4': 'cyan',
+      '#059669': 'emerald',
+      '#F59E0B': 'amber',
+      '#6B7280': 'gray',
+      '#6FA4AF': 'teal'
+    };
+
+    const baseColor = colorMap[hexColor] || 'blue';
+
+    if (type === 'bg') return `bg-${baseColor}-600`;
+    if (type === 'hoverBg') return `hover:bg-${baseColor}-700`;
+    if (type === 'text') return `text-${baseColor}-600`;
+    if (type === 'border') return `border-${baseColor}-500`;
+    if (type === 'bg-light') return `bg-${baseColor}-50`;
+    if (type === 'border-light') return `border-${baseColor}-200`;
+    if (type === 'focus-border') return `focus:border-${baseColor}-500`;
+    if (type === 'focus-ring') return `focus:ring-${baseColor}-100`;
+    return '';
+  };
+
+  const primaryColor = companyColor || '#6FA4AF';
+  const primaryBgClass = getTailwindColorClass(primaryColor, 'bg');
+  const primaryHoverBgClass = getTailwindColorClass(primaryColor, 'hoverBg');
+  const primaryTextColorClass = getTailwindColorClass(primaryColor, 'text');
+  const primaryBorderColorClass = getTailwindColorClass(primaryColor, 'border');
+  const primaryBgLightClass = getTailwindColorClass(primaryColor, 'bg-light');
+  const primaryBorderLightClass = getTailwindColorClass(primaryColor, 'border-light');
+  const primaryFocusBorderClass = getTailwindColorClass(primaryColor, 'focus-border');
+  const primaryFocusRingClass = getTailwindColorClass(primaryColor, 'focus-ring');
   const [payslips, setPayslips] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -212,6 +252,16 @@ const Payments = () => {
                 Gestion des paiements
               </h1>
             </div>
+            {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' || user?.role === 'CAISSIER') && (
+              <div className="flex items-center">
+                <button
+                  onClick={() => setShowModal(true)}
+                  className={`${primaryBgClass} ${primaryHoverBgClass} text-white px-4 py-2 rounded-md text-sm font-medium`}
+                >
+                  Nouveau paiement
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -332,7 +382,7 @@ const Payments = () => {
 
       {/* Modal de paiement */}
       {showModal && selectedPayslip && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="fixed inset-0 backdrop-blur-md bg-white/30 p-6 rounded-lg bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
@@ -357,7 +407,7 @@ const Payments = () => {
                   <input
                     type="number"
                     step="0.01"
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    className={`mt-1 block w-full border-gray-300 rounded-md shadow-sm ${primaryFocusBorderClass} ${primaryFocusRingClass}`}
                     value={formData.amount}
                     onChange={(e) => setFormData({...formData, amount: e.target.value})}
                   />
@@ -365,7 +415,7 @@ const Payments = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Mode de paiement</label>
                   <select
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                    className={`mt-1 block w-full border-gray-300 rounded-md shadow-sm ${primaryFocusBorderClass} ${primaryFocusRingClass}`}
                     value={formData.method}
                     onChange={(e) => setFormData({...formData, method: e.target.value})}
                   >
@@ -385,7 +435,7 @@ const Payments = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700"
+                    className={`px-4 py-2 text-sm font-medium text-white ${primaryBgClass} ${primaryHoverBgClass} border border-transparent rounded-md`}
                   >
                     Enregistrer
                   </button>

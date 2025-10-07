@@ -27,5 +27,7 @@ router.post('/:id/approve', auth_1.authenticateToken, (0, auth_1.authorizeRoles)
 router.post('/:id/close', auth_1.authenticateToken, (0, auth_1.authorizeRoles)(UserRole.SUPER_ADMIN, UserRole.ADMIN), payRunController_1.PayRunController.closePayRun);
 // Routes par entreprise
 router.get('/company/:companyId', auth_1.authenticateToken, auth_1.authorizeCompanyAccess, payRunController_1.PayRunController.getPayRunsByCompany);
+// Paiement journalier immédiat
+router.post('/pay-journalier/:employeeId', auth_1.authenticateToken, (0, auth_1.authorizeRoles)(UserRole.SUPER_ADMIN, UserRole.CAISSIER), payRunController_1.PayRunController.payJournalierEmployee);
 exports.default = router;
 //# sourceMappingURL=payRun.js.map

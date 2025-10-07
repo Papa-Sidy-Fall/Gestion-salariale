@@ -5,9 +5,12 @@ import { AuthRequest } from '../middleware/auth';
 export class PayRunController {
   static async createPayRun(req: AuthRequest, res: Response) {
     try {
+      const { period, companyId, fixedEmployeePaymentOption } = req.body;
+
       const payRunData = {
-        ...req.body,
-        companyId: req.user?.role === 'SUPER_ADMIN' ? req.body.companyId : req.user?.companyId
+        period,
+        companyId: req.user?.role === 'SUPER_ADMIN' ? companyId : req.user?.companyId,
+        fixedEmployeePaymentOption: fixedEmployeePaymentOption || 'FULL_MONTH' // Option par défaut
       };
 
       const payRun = await PayRunService.createPayRun(payRunData);
@@ -66,8 +69,14 @@ export class PayRunController {
         return res.status(400).json({ error: 'ID cycle de paie requis' });
       }
 
-      const updateData = req.body;
-      const payRun = await PayRunService.updatePayRun(id, updateData);
+      const { fixedEmployeePaymentOption, ...updateData } = req.body;
+
+      const dataToUpdate: any = { ...updateData };
+      if (fixedEmployeePaymentOption) {
+        dataToUpdate.fixedEmployeePaymentOption = fixedEmployeePaymentOption;
+      }
+
+      const payRun = await PayRunService.updatePayRun(id, dataToUpdate);
 
       res.json({
         message: 'Cycle de paie mis à jour avec succès',

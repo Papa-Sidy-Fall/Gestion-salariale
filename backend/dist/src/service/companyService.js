@@ -78,7 +78,7 @@ class CompanyService {
         return { message: 'Entreprise supprimée avec succès' };
     }
     static async getCompanyStats(companyId) {
-        const [employeeCount, totalSalary, payRunsCount] = await Promise.all([
+        const [employeeCount, totalSalary, payRunsCount, company] = await Promise.all([
             prisma.employee.count({
                 where: { companyId, isActive: true }
             }),
@@ -88,12 +88,16 @@ class CompanyService {
             }),
             prisma.payRun.count({
                 where: { companyId }
+            }),
+            prisma.company.findUnique({
+                where: { id: companyId }
             })
         ]);
         return {
             employeeCount,
             totalSalary: totalSalary._sum.rate || 0,
-            payRunsCount
+            payRunsCount,
+            budget: (company === null || company === void 0 ? void 0 : company.budget) || 0
         };
     }
 }

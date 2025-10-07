@@ -7,17 +7,19 @@ export declare class PaymentService {
         payslip: {
             employee: {
                 id: string;
+                email: string | null;
                 companyId: string;
                 createdAt: Date;
                 updatedAt: Date;
+                address: string | null;
+                phone: string | null;
                 firstName: string;
                 lastName: string;
-                position: string;
+                position: string | null;
                 contractType: import(".prisma/client").$Enums.ContractType;
                 rate: number;
-                dailyRate: number | null;
-                hourlyRate: number | null;
-                bankDetails: string | null;
+                dailyRate: number;
+                hourlyRate: number;
                 isActive: boolean;
             };
             payRun: {
@@ -27,6 +29,7 @@ export declare class PaymentService {
                 updatedAt: Date;
                 period: string;
                 status: import(".prisma/client").$Enums.PayRunStatus;
+                fixedEmployeePaymentOption: string;
             };
         } & {
             id: string;
@@ -47,23 +50,24 @@ export declare class PaymentService {
         amount: number;
         method: import(".prisma/client").$Enums.PaymentMethod;
         date: Date;
-        receiptPdf: string | null;
     }>;
     static getPaymentsByPayslip(payslipId: string): Promise<({
         payslip: {
             employee: {
                 id: string;
+                email: string | null;
                 companyId: string;
                 createdAt: Date;
                 updatedAt: Date;
+                address: string | null;
+                phone: string | null;
                 firstName: string;
                 lastName: string;
-                position: string;
+                position: string | null;
                 contractType: import(".prisma/client").$Enums.ContractType;
                 rate: number;
-                dailyRate: number | null;
-                hourlyRate: number | null;
-                bankDetails: string | null;
+                dailyRate: number;
+                hourlyRate: number;
                 isActive: boolean;
             };
             payRun: {
@@ -73,6 +77,7 @@ export declare class PaymentService {
                 updatedAt: Date;
                 period: string;
                 status: import(".prisma/client").$Enums.PayRunStatus;
+                fixedEmployeePaymentOption: string;
             };
         } & {
             id: string;
@@ -93,23 +98,24 @@ export declare class PaymentService {
         amount: number;
         method: import(".prisma/client").$Enums.PaymentMethod;
         date: Date;
-        receiptPdf: string | null;
     })[]>;
     static getPaymentsByCompany(companyId: string): Promise<({
         payslip: {
             employee: {
                 id: string;
+                email: string | null;
                 companyId: string;
                 createdAt: Date;
                 updatedAt: Date;
+                address: string | null;
+                phone: string | null;
                 firstName: string;
                 lastName: string;
-                position: string;
+                position: string | null;
                 contractType: import(".prisma/client").$Enums.ContractType;
                 rate: number;
-                dailyRate: number | null;
-                hourlyRate: number | null;
-                bankDetails: string | null;
+                dailyRate: number;
+                hourlyRate: number;
                 isActive: boolean;
             };
             payRun: {
@@ -119,6 +125,7 @@ export declare class PaymentService {
                 updatedAt: Date;
                 period: string;
                 status: import(".prisma/client").$Enums.PayRunStatus;
+                fixedEmployeePaymentOption: string;
             };
         } & {
             id: string;
@@ -139,7 +146,6 @@ export declare class PaymentService {
         amount: number;
         method: import(".prisma/client").$Enums.PaymentMethod;
         date: Date;
-        receiptPdf: string | null;
     })[]>;
     static getAllPayments(): Promise<({
         payslip: {
@@ -147,7 +153,7 @@ export declare class PaymentService {
                 id: string;
                 firstName: string;
                 lastName: string;
-                position: string;
+                position: string | null;
             };
             payRun: {
                 company: {
@@ -160,6 +166,7 @@ export declare class PaymentService {
                     phone: string | null;
                     logo: string | null;
                     color: string | null;
+                    budget: number;
                 };
             } & {
                 id: string;
@@ -168,6 +175,7 @@ export declare class PaymentService {
                 updatedAt: Date;
                 period: string;
                 status: import(".prisma/client").$Enums.PayRunStatus;
+                fixedEmployeePaymentOption: string;
             };
         } & {
             id: string;
@@ -188,7 +196,6 @@ export declare class PaymentService {
         amount: number;
         method: import(".prisma/client").$Enums.PaymentMethod;
         date: Date;
-        receiptPdf: string | null;
     })[]>;
     static getPaymentById(id: string): Promise<({
         payslip: {
@@ -203,20 +210,23 @@ export declare class PaymentService {
                     phone: string | null;
                     logo: string | null;
                     color: string | null;
+                    budget: number;
                 };
             } & {
                 id: string;
+                email: string | null;
                 companyId: string;
                 createdAt: Date;
                 updatedAt: Date;
+                address: string | null;
+                phone: string | null;
                 firstName: string;
                 lastName: string;
-                position: string;
+                position: string | null;
                 contractType: import(".prisma/client").$Enums.ContractType;
                 rate: number;
-                dailyRate: number | null;
-                hourlyRate: number | null;
-                bankDetails: string | null;
+                dailyRate: number;
+                hourlyRate: number;
                 isActive: boolean;
             };
             payRun: {
@@ -226,6 +236,7 @@ export declare class PaymentService {
                 updatedAt: Date;
                 period: string;
                 status: import(".prisma/client").$Enums.PayRunStatus;
+                fixedEmployeePaymentOption: string;
             };
         } & {
             id: string;
@@ -246,7 +257,6 @@ export declare class PaymentService {
         amount: number;
         method: import(".prisma/client").$Enums.PaymentMethod;
         date: Date;
-        receiptPdf: string | null;
     }) | null>;
     static deletePayment(id: string): Promise<{
         message: string;

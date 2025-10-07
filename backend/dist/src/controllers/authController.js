@@ -50,8 +50,10 @@ class AuthController {
     }
     static async login(req, res) {
         try {
+            console.log('Requête de connexion reçue. Corps de la requête:', req.body);
             const { email, password } = req.body;
             if (!email || !password) {
+                console.log('Erreur: Email ou mot de passe manquant dans req.body');
                 return res.status(400).json({ error: 'Email et mot de passe requis' });
             }
             const result = await authService_1.AuthService.login(email, password);

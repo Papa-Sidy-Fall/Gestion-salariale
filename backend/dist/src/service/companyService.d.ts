@@ -16,6 +16,7 @@ export declare class CompanyService {
         phone: string | null;
         logo: string | null;
         color: string | null;
+        budget: number;
     }>;
     static getAllCompanies(): Promise<({
         users: {
@@ -44,6 +45,7 @@ export declare class CompanyService {
         phone: string | null;
         logo: string | null;
         color: string | null;
+        budget: number;
     })[]>;
     static getCompanyById(id: string): Promise<{
         users: {
@@ -57,17 +59,19 @@ export declare class CompanyService {
         }[];
         employees: {
             id: string;
+            email: string | null;
             companyId: string;
             createdAt: Date;
             updatedAt: Date;
+            address: string | null;
+            phone: string | null;
             firstName: string;
             lastName: string;
-            position: string;
+            position: string | null;
             contractType: import(".prisma/client").$Enums.ContractType;
             rate: number;
-            dailyRate: number | null;
-            hourlyRate: number | null;
-            bankDetails: string | null;
+            dailyRate: number;
+            hourlyRate: number;
             isActive: boolean;
         }[];
         payRuns: {
@@ -77,6 +81,7 @@ export declare class CompanyService {
             updatedAt: Date;
             period: string;
             status: import(".prisma/client").$Enums.PayRunStatus;
+            fixedEmployeePaymentOption: string;
         }[];
     } & {
         id: string;
@@ -88,6 +93,7 @@ export declare class CompanyService {
         phone: string | null;
         logo: string | null;
         color: string | null;
+        budget: number;
     }>;
     static updateCompany(id: string, data: {
         name?: string;
@@ -106,6 +112,7 @@ export declare class CompanyService {
         phone: string | null;
         logo: string | null;
         color: string | null;
+        budget: number;
     }>;
     static deleteCompany(id: string): Promise<{
         message: string;
@@ -114,6 +121,7 @@ export declare class CompanyService {
         employeeCount: number;
         totalSalary: number;
         payRunsCount: number;
+        budget: number;
     }>;
 }
 //# sourceMappingURL=companyService.d.ts.map

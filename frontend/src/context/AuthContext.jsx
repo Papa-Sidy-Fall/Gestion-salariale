@@ -13,6 +13,8 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [companyColor, setCompanyColor] = useState('#6FA4AF'); // Couleur par défaut
+  const [companyLogo, setCompanyLogo] = useState(null); // Logo par défaut
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,16 +30,28 @@ export const AuthProvider = ({ children }) => {
   const fetchProfile = async () => {
     try {
       const response = await axios.get('http://localhost:3000/api/auth/profile');
-      setUser(response.data.user);
+      const fetchedUser = response.data.user;
+      setUser(fetchedUser);
+
+      if (fetchedUser.companyId) {
+        const companyResponse = await axios.get(`http://localhost:3000/api/companies/${fetchedUser.companyId}`);
+        setCompanyColor(companyResponse.data.company.color || '#6FA4AF');
+        setCompanyLogo(companyResponse.data.company.logo || null);
+      } else {
+        setCompanyColor('#6FA4AF');
+        setCompanyLogo(null);
+      }
     } catch (error) {
       localStorage.removeItem('token');
       delete axios.defaults.headers.common['Authorization'];
+      setCompanyColor('#6FA4AF');
     } finally {
       setLoading(false);
     }
   };
 
   const login = async (email, password) => {
+    console.log('Envoi des données de connexion à l\'API:', { email, password }); // Ajout du log
     const response = await axios.post('http://localhost:3000/api/auth/login', {
       email,
       password
@@ -47,6 +61,16 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('token', token);
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     setUser(user);
+
+    if (user.companyId) {
+      const companyResponse = await axios.get(`http://localhost:3000/api/companies/${user.companyId}`);
+      setCompanyColor(companyResponse.data.company.color || '#6FA4AF');
+      setCompanyLogo(companyResponse.data.company.logo || null);
+    } else {
+      setCompanyColor('#6FA4AF');
+      setCompanyLogo(null);
+    }
+
     return user;
   };
 
@@ -65,6 +89,8 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     delete axios.defaults.headers.common['Authorization'];
     setUser(null);
+    setCompanyColor('#6FA4AF');
+    setCompanyLogo(null);
   };
 
   const value = {
@@ -72,7 +98,9 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
-    loading
+    loading,
+    companyColor,
+    companyLogo
   };
 
   return (

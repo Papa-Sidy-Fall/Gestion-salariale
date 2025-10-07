@@ -12,7 +12,7 @@ export declare class AttendanceService {
             id: string;
             firstName: string;
             lastName: string;
-            position: string;
+            position: string | null;
             contractType: import(".prisma/client").$Enums.ContractType;
         };
     } & {
@@ -24,7 +24,7 @@ export declare class AttendanceService {
         date: Date;
         checkIn: Date | null;
         checkOut: Date | null;
-        hoursWorked: number | null;
+        hoursWorked: number;
         notes: string | null;
     }>;
     static checkIn(employeeId: string, date?: Date): Promise<{
@@ -32,7 +32,7 @@ export declare class AttendanceService {
             id: string;
             firstName: string;
             lastName: string;
-            position: string;
+            position: string | null;
         };
     } & {
         id: string;
@@ -43,7 +43,7 @@ export declare class AttendanceService {
         date: Date;
         checkIn: Date | null;
         checkOut: Date | null;
-        hoursWorked: number | null;
+        hoursWorked: number;
         notes: string | null;
     }>;
     static checkOut(employeeId: string, date?: Date): Promise<{
@@ -51,7 +51,7 @@ export declare class AttendanceService {
             id: string;
             firstName: string;
             lastName: string;
-            position: string;
+            position: string | null;
         };
     } & {
         id: string;
@@ -62,7 +62,7 @@ export declare class AttendanceService {
         date: Date;
         checkIn: Date | null;
         checkOut: Date | null;
-        hoursWorked: number | null;
+        hoursWorked: number;
         notes: string | null;
     }>;
     static getAllAttendances(filters?: {
@@ -80,7 +80,7 @@ export declare class AttendanceService {
             };
             firstName: string;
             lastName: string;
-            position: string;
+            position: string | null;
             contractType: import(".prisma/client").$Enums.ContractType;
         };
     } & {
@@ -92,7 +92,7 @@ export declare class AttendanceService {
         date: Date;
         checkIn: Date | null;
         checkOut: Date | null;
-        hoursWorked: number | null;
+        hoursWorked: number;
         notes: string | null;
     })[]>;
     static getAttendanceById(id: string): Promise<{
@@ -100,7 +100,7 @@ export declare class AttendanceService {
             id: string;
             firstName: string;
             lastName: string;
-            position: string;
+            position: string | null;
             contractType: import(".prisma/client").$Enums.ContractType;
         };
     } & {
@@ -112,7 +112,7 @@ export declare class AttendanceService {
         date: Date;
         checkIn: Date | null;
         checkOut: Date | null;
-        hoursWorked: number | null;
+        hoursWorked: number;
         notes: string | null;
     }>;
     static getAttendancesByEmployee(employeeId: string, period?: string): Promise<({
@@ -120,7 +120,7 @@ export declare class AttendanceService {
             id: string;
             firstName: string;
             lastName: string;
-            position: string;
+            position: string | null;
             contractType: import(".prisma/client").$Enums.ContractType;
         };
     } & {
@@ -132,7 +132,7 @@ export declare class AttendanceService {
         date: Date;
         checkIn: Date | null;
         checkOut: Date | null;
-        hoursWorked: number | null;
+        hoursWorked: number;
         notes: string | null;
     })[]>;
     static updateAttendance(id: string, data: {
@@ -145,7 +145,7 @@ export declare class AttendanceService {
             id: string;
             firstName: string;
             lastName: string;
-            position: string;
+            position: string | null;
         };
     } & {
         id: string;
@@ -156,7 +156,7 @@ export declare class AttendanceService {
         date: Date;
         checkIn: Date | null;
         checkOut: Date | null;
-        hoursWorked: number | null;
+        hoursWorked: number;
         notes: string | null;
     }>;
     static deleteAttendance(id: string): Promise<{
@@ -182,8 +182,8 @@ export declare class AttendanceService {
         daysWorked: number;
         totalHours: number;
         rate: number;
-        dailyRate: number | null;
-        hourlyRate: number | null;
+        dailyRate: number;
+        hourlyRate: number;
         gross: number;
     }>;
     static getAttendancesByPeriod(period: string, companyId?: string): Promise<({
@@ -195,7 +195,7 @@ export declare class AttendanceService {
             };
             firstName: string;
             lastName: string;
-            position: string;
+            position: string | null;
             contractType: import(".prisma/client").$Enums.ContractType;
         };
     } & {
@@ -207,7 +207,7 @@ export declare class AttendanceService {
         date: Date;
         checkIn: Date | null;
         checkOut: Date | null;
-        hoursWorked: number | null;
+        hoursWorked: number;
         notes: string | null;
     })[]>;
     static getTodayAttendance(employeeId: string): Promise<({
@@ -225,7 +225,7 @@ export declare class AttendanceService {
         date: Date;
         checkIn: Date | null;
         checkOut: Date | null;
-        hoursWorked: number | null;
+        hoursWorked: number;
         notes: string | null;
     }) | null>;
     static manualTimeEntry(data: {
@@ -239,7 +239,7 @@ export declare class AttendanceService {
             id: string;
             firstName: string;
             lastName: string;
-            position: string;
+            position: string | null;
             contractType: import(".prisma/client").$Enums.ContractType;
         };
     } & {
@@ -251,7 +251,7 @@ export declare class AttendanceService {
         date: Date;
         checkIn: Date | null;
         checkOut: Date | null;
-        hoursWorked: number | null;
+        hoursWorked: number;
         notes: string | null;
     }>;
 }

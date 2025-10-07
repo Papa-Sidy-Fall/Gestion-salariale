@@ -24,9 +24,17 @@ class EmployeeController {
         }
     }
     static async getAllEmployees(req, res) {
+        var _a, _b;
         try {
-            const { companyId } = req.query;
-            const employees = await employeeService_1.EmployeeService.getAllEmployees(companyId);
+            let filterCompanyId = req.query.companyId;
+            // Vérifier les permissions : Super admin peut voir partout, autres rôles seulement leur entreprise
+            if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== 'SUPER_ADMIN') {
+                filterCompanyId = ((_b = req.user) === null || _b === void 0 ? void 0 : _b.companyId) || '';
+                if (!filterCompanyId) {
+                    return res.status(403).json({ error: 'Accès non autorisé - entreprise non trouvée' });
+                }
+            }
+            const employees = await employeeService_1.EmployeeService.getAllEmployees(filterCompanyId);
             res.json({ employees });
         }
         catch (error) {

@@ -31,12 +31,17 @@ class PaymentController {
         }
     }
     static async getPaymentsByCompany(req, res) {
+        var _a, _b;
         try {
-            const { companyId } = req.params;
-            if (!companyId) {
+            let filterCompanyId = req.params.companyId;
+            if (!filterCompanyId) {
                 return res.status(400).json({ error: 'ID entreprise requis' });
             }
-            const payments = await paymentService_1.PaymentService.getPaymentsByCompany(companyId);
+            // Vérifier les permissions : Super admin peut voir partout, autres rôles seulement leur entreprise
+            if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== 'SUPER_ADMIN' && ((_b = req.user) === null || _b === void 0 ? void 0 : _b.companyId) !== filterCompanyId) {
+                return res.status(403).json({ error: 'Accès non autorisé à cette entreprise' });
+            }
+            const payments = await paymentService_1.PaymentService.getPaymentsByCompany(filterCompanyId);
             res.json({ payments });
         }
         catch (error) {
@@ -44,7 +49,18 @@ class PaymentController {
         }
     }
     static async getAllPayments(req, res) {
+        var _a, _b;
         try {
+            // Vérifier les permissions : Super admin peut voir partout, autres rôles seulement leur entreprise
+            if (((_a = req.user) === null || _a === void 0 ? void 0 : _a.role) !== 'SUPER_ADMIN') {
+                const companyId = (_b = req.user) === null || _b === void 0 ? void 0 : _b.companyId;
+                if (!companyId) {
+                    return res.status(403).json({ error: 'Accès non autorisé - entreprise non trouvée' });
+                }
+                const payments = await paymentService_1.PaymentService.getPaymentsByCompany(companyId);
+                return res.json({ payments });
+            }
+            // Super admin voit tous les paiements
             const payments = await paymentService_1.PaymentService.getAllPayments();
             res.json({ payments });
         }
@@ -89,12 +105,13 @@ class PaymentController {
             if (!payment) {
                 return res.status(404).json({ error: 'Paiement non trouvé' });
             }
-            // Générer le PDF
+            // Générer le PDF avec les informations du caissier
             const pdfBuffer = await pdfService_1.PDFService.generateInvoicePDF({
                 payment,
                 payslip: payment.payslip,
                 employee: payment.payslip.employee,
-                company: payment.payslip.employee.company
+                company: payment.payslip.employee.company,
+                cashier: req.user // Informations du caissier connecté
             });
             // Définir les headers pour le téléchargement
             res.setHeader('Content-Type', 'application/pdf');

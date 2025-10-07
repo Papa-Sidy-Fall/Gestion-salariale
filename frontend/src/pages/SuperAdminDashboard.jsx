@@ -4,8 +4,37 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Building2, Users, DollarSign, TrendingUp, Eye, Settings } from 'lucide-react';
 
+const getTailwindColorClass = (hexColor, type = 'bg') => {
+  const colorMap = {
+    '#3B82F6': 'blue',
+    '#10B981': 'green',
+    '#8B5CF6': 'purple',
+    '#EF4444': 'red',
+    '#F97316': 'orange',
+    '#EC4899': 'pink',
+    '#6366F1': 'indigo',
+    '#14B8A6': 'teal',
+    '#06B6D4': 'cyan',
+    '#059669': 'emerald',
+    '#F59E0B': 'amber',
+    '#6B7280': 'gray',
+    '#6FA4AF': 'teal'
+  };
+
+  const baseColor = colorMap[hexColor] || 'blue';
+
+  if (type === 'bg') return `bg-${baseColor}-600`;
+  if (type === 'hoverBg') return `hover:bg-${baseColor}-700`;
+  if (type === 'text') return `text-${baseColor}-600`;
+  if (type === 'border') return `border-${baseColor}-500`;
+  if (type === 'bg-light') return `bg-${baseColor}-100`;
+  if (type === 'text-strong') return `text-${baseColor}-800`;
+  if (type === 'border-light') return `border-${baseColor}-200`;
+  return '';
+};
+
 const SuperAdminDashboard = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, companyColor, companyLogo } = useAuth();
   const navigate = useNavigate();
   const [companies, setCompanies] = useState([]);
   const [globalStats, setGlobalStats] = useState({
@@ -121,7 +150,16 @@ const SuperAdminDashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <Building2 className="h-8 w-8 text-indigo-600 mr-3" />
+              {companyLogo && (
+                <img
+                  src={companyLogo}
+                  alt="Logo entreprise"
+                  className="h-8 w-8 rounded-full object-cover mr-3"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                  }}
+                />
+              )}
               <h1 className="text-2xl font-bold text-gray-900">
                 Vue Globale - Super Admin
               </h1>
@@ -158,38 +196,38 @@ const SuperAdminDashboard = () => {
                 title="Entreprises"
                 value={globalStats.totalCompanies}
                 icon={Building2}
-                color="border-l-4 border-blue-500"
+                color={`border-l-4 ${getTailwindColorClass(companyColor, 'border')}`}
               />
               <StatCard
                 title="Employés Totaux"
                 value={globalStats.totalEmployees}
                 icon={Users}
-                color="border-l-4 border-green-500"
+                color={`border-l-4 ${getTailwindColorClass(companyColor, 'border')}`}
               />
               <StatCard
                 title="Masse Salariale"
                 value={`${globalStats.totalSalary.toLocaleString()} FCFA`}
                 icon={DollarSign}
-                color="border-l-4 border-purple-500"
+                color={`border-l-4 ${getTailwindColorClass(companyColor, 'border')}`}
               />
               <StatCard
                 title="Paiements Effectués"
                 value={`${globalStats.totalPayments.toLocaleString()} FCFA`}
                 icon={TrendingUp}
-                color="border-l-4 border-orange-500"
+                color={`border-l-4 ${getTailwindColorClass(companyColor, 'border')}`}
               />
             </div>
           </div>
 
           {/* Liste des Entreprises */}
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <div className="px-4 py-5 sm:px-6 flex justify-between items-center">
+            <div className={`px-4 py-5 sm:px-6 flex justify-between items-center ${getTailwindColorClass(companyColor, 'bg-light')}`}>
               <h3 className="text-lg leading-6 font-medium text-gray-900">
                 Toutes les Entreprises
               </h3>
               <button
                 onClick={() => navigate('/companies')}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                className={`${getTailwindColorClass(companyColor, 'bg')} ${getTailwindColorClass(companyColor, 'hoverBg')} text-white px-4 py-2 rounded-md text-sm font-medium`}
               >
                 + Nouvelle Entreprise
               </button>
@@ -242,7 +280,7 @@ const SuperAdminDashboard = () => {
                     <div className="flex items-center space-x-3">
                       <button
                         onClick={() => handleViewCompany(company)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center"
+                        className={`${getTailwindColorClass(companyColor, 'bg')} ${getTailwindColorClass(companyColor, 'hoverBg')} text-white px-4 py-2 rounded-md text-sm font-medium flex items-center`}
                       >
                         <Eye className="h-4 w-4 mr-2" />
                         Voir Dashboard
@@ -265,7 +303,7 @@ const SuperAdminDashboard = () => {
                 <p className="mt-2 text-gray-500">Aucune entreprise créée.</p>
                 <button
                   onClick={() => navigate('/companies')}
-                  className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                  className={`${getTailwindColorClass(companyColor, 'bg')} ${getTailwindColorClass(companyColor, 'hoverBg')} text-white px-4 py-2 rounded-md text-sm font-medium`}
                 >
                   Créer la première entreprise
                 </button>

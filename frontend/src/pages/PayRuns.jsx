@@ -3,6 +3,36 @@ import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { Calendar, Trash2 } from 'lucide-react';
 
+const getTailwindColorClass = (hexColor, type = 'bg') => {
+  const colorMap = {
+    '#3B82F6': 'blue',
+    '#10B981': 'green',
+    '#8B5CF6': 'purple',
+    '#EF4444': 'red',
+    '#F97316': 'orange',
+    '#EC4899': 'pink',
+    '#6366F1': 'indigo',
+    '#14B8A6': 'teal',
+    '#06B6D4': 'cyan',
+    '#059669': 'emerald',
+    '#F59E0B': 'amber',
+    '#6B7280': 'gray',
+    '#6FA4AF': 'teal'
+  };
+
+  const baseColor = colorMap[hexColor] || 'blue';
+
+  if (type === 'bg') return `bg-${baseColor}-600`;
+  if (type === 'hoverBg') return `hover:bg-${baseColor}-700`;
+  if (type === 'text') return `text-${baseColor}-600`;
+  if (type === 'border') return `border-${baseColor}-500`;
+  if (type === 'bg-light') return `bg-${baseColor}-50`;
+  if (type === 'border-light') return `border-${baseColor}-200`;
+  if (type === 'focus-border') return `focus:border-${baseColor}-500`;
+  if (type === 'focus-ring') return `focus:ring-${baseColor}-100`;
+  return '';
+};
+
 const PayRuns = () => {
   const { user } = useAuth();
   const [payRuns, setPayRuns] = useState([]);
@@ -11,7 +41,8 @@ const PayRuns = () => {
   const [selectedPayRun, setSelectedPayRun] = useState(null);
   const [notification, setNotification] = useState(null);
   const [formData, setFormData] = useState({
-    period: new Date().toISOString().slice(0, 7) // YYYY-MM format
+    period: new Date().toISOString().slice(0, 7), // YYYY-MM format
+    fixedEmployeePaymentOption: 'FULL_MONTH' // Nouvelle option par défaut
   });
 
   useEffect(() => {
@@ -52,7 +83,8 @@ const PayRuns = () => {
     try {
       await axios.post('http://localhost:3000/api/payruns', {
         ...formData,
-        companyId: user?.companyId
+        companyId: user?.companyId,
+        fixedEmployeePaymentOption: formData.fixedEmployeePaymentOption // Envoyer la nouvelle option
       });
 
       fetchPayRuns();
@@ -66,8 +98,7 @@ const PayRuns = () => {
   };
 
   const handleGeneratePayslips = async (payRunId) => {
-    if (!confirm('Êtes-vous sûr de vouloir générer les bulletins pour ce cycle ?')) return;
-
+    showNotification('Génération des bulletins en cours...', 'info');
     try {
       await axios.post(`http://localhost:3000/api/payruns/${payRunId}/generate-payslips`);
       fetchPayRuns();
@@ -79,8 +110,7 @@ const PayRuns = () => {
   };
 
   const handleApprove = async (payRunId) => {
-    if (!confirm('Êtes-vous sûr de vouloir approuver ce cycle de paie ?')) return;
-
+    showNotification('Approbation du cycle en cours...', 'info');
     try {
       await axios.post(`http://localhost:3000/api/payruns/${payRunId}/approve`);
       fetchPayRuns();
@@ -92,8 +122,7 @@ const PayRuns = () => {
   };
 
   const handleClose = async (payRunId) => {
-    if (!confirm('Êtes-vous sûr de vouloir clôturer ce cycle de paie ?')) return;
-
+    showNotification('Clôture du cycle en cours...', 'info');
     try {
       await axios.post(`http://localhost:3000/api/payruns/${payRunId}/close`);
       fetchPayRuns();
@@ -118,10 +147,10 @@ const PayRuns = () => {
   const handleDelete = async (payRunId, status) => {
     const isClosed = status === 'CLOTURE';
     const message = isClosed
-      ? '⚠️ ATTENTION: Vous allez supprimer un cycle CLÔTURÉ. Cette action est IRRÉVERSIBLE et peut affecter les données comptables. Le budget sera remboursé automatiquement. Continuer ?'
+      ? '⚠️ ATTENTION: Vous allez supprimer un cycle CLÔTURÉ. Cette action est IRRÉVERSIBLE et peut affecter les données comptables. Le budget sera remboursé automatiquement.'
       : 'Êtes-vous sûr de vouloir supprimer ce cycle de paie ? Cette action est irréversible.';
 
-    if (!confirm(message)) return;
+    showNotification(message, 'info'); // Remplacer confirm par une notification
 
     try {
       await axios.delete(`http://localhost:3000/api/payruns/${payRunId}`);
@@ -170,14 +199,16 @@ const PayRuns = () => {
                 Cycles de paie
               </h1>
             </div>
-            <div className="flex items-center">
-              <button
-                onClick={() => setShowModal(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-              >
-                Nouveau cycle
-              </button>
-            </div>
+            {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+              <div className="flex items-center">
+                <button
+                  onClick={() => setShowModal(true)}
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                >
+                  Nouveau cycle
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -230,7 +261,7 @@ const PayRuns = () => {
                         {getStatusText(payRun.status)}
                       </span>
                       <div className="flex space-x-2">
-                        {payRun.status === 'BROUILLON' && (
+                        {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && payRun.status === 'BROUILLON' && (
                           <>
                             <button
                               onClick={() => handleGeneratePayslips(payRun.id)}
@@ -253,7 +284,7 @@ const PayRuns = () => {
                             </button>
                           </>
                         )}
-                        {payRun.status === 'APPROUVE' && (
+                        {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && payRun.status === 'APPROUVE' && (
                           <button
                             onClick={() => handleClose(payRun.id)}
                             className="text-purple-600 hover:text-purple-900 text-sm font-medium"
@@ -261,7 +292,7 @@ const PayRuns = () => {
                             Clôturer
                           </button>
                         )}
-                        {payRun.status === 'CLOTURE' && (
+                        {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && payRun.status === 'CLOTURE' && (
                           <div className="flex items-center space-x-2">
                             <span className="text-gray-500 text-sm">Terminé</span>
                             <button
@@ -311,12 +342,12 @@ const PayRuns = () => {
         <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl transform transition-all max-h-[90vh] overflow-hidden">
             {/* Header avec fond uni */}
-            <div className="bg-indigo-600 px-6 py-4 rounded-t-2xl">
+            <div className={`${getTailwindColorClass(user?.company?.color || '#6FA4AF', 'bg')} px-6 py-4 rounded-t-2xl`}>
               <h3 className="text-xl font-bold text-white flex items-center">
                 <Calendar className="h-6 w-6 mr-2" />
                 Créer un nouveau cycle de paie
               </h3>
-              <p className="text-indigo-100 text-sm mt-1">
+              <p className={`${getTailwindColorClass(user?.company?.color || '#6FA4AF', 'text-strong')} text-sm mt-1`}>
                 Définissez la période pour générer les bulletins de salaire
               </p>
             </div>
@@ -338,14 +369,32 @@ const PayRuns = () => {
                       <div className="relative">
                         <input
                           type="month"
-                          className="w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 transition-all duration-200 bg-gray-50 focus:bg-white"
+                          className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${getTailwindColorClass(user?.company?.color || '#6FA4AF', 'focus-border')} ${getTailwindColorClass(user?.company?.color || '#6FA4AF', 'focus-ring')} transition-all duration-200 bg-gray-50 focus:bg-white`}
                           value={formData.period}
                           onChange={(e) => setFormData({...formData, period: e.target.value})}
-                          required
                         />
                       </div>
                       <p className="text-xs text-gray-500">Sélectionnez le mois pour lequel vous souhaitez créer les bulletins</p>
                     </div>
+
+                    {user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' ? (
+                      <div className="space-y-2">
+                        <label className="block text-sm font-semibold text-gray-800">
+                          Option de paiement employés fixes <span className="text-red-500">*</span>
+                        </label>
+                        <div className="relative">
+                          <select
+                            className={`w-full pl-4 pr-4 py-3 border-2 border-gray-200 rounded-xl ${getTailwindColorClass(user?.company?.color || '#6FA4AF', 'focus-border')} ${getTailwindColorClass(user?.company?.color || '#6FA4AF', 'focus-ring')} transition-all duration-200 bg-gray-50 focus:bg-white`}
+                            value={formData.fixedEmployeePaymentOption}
+                            onChange={(e) => setFormData({...formData, fixedEmployeePaymentOption: e.target.value})}
+                          >
+                            <option value="FULL_MONTH">Payer le mois complet</option>
+                            <option value="DAYS_WORKED">Payer uniquement les jours travaillés</option>
+                          </select>
+                        </div>
+                        <p className="text-xs text-gray-500">Décidez comment payer les employés à salaire fixe pour ce cycle.</p>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
 
@@ -363,7 +412,7 @@ const PayRuns = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-6 py-3 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                    className={`px-6 py-3 text-sm font-semibold text-white ${getTailwindColorClass(user?.company?.color || '#6FA4AF', 'bg')} ${getTailwindColorClass(user?.company?.color || '#6FA4AF', 'hoverBg')} rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg hover:shadow-xl`}
                   >
                     <Calendar className="h-5 w-5 mr-2" />
                     Créer le cycle

@@ -10,6 +10,7 @@ async function main() {
     console.log('🌱 Début du seeding...');
     // Créer un Super Admin par défaut
     const hashedPassword = await bcrypt_1.default.hash('admin123', 10);
+    console.log('Tentative de création du Super Admin...');
     const superAdmin = await prisma.user.upsert({
         where: { email: 'super@test.com' },
         update: {},
@@ -65,7 +66,6 @@ async function main() {
                 position: 'Développeur',
                 contractType: 'FIXE',
                 rate: 500000,
-                bankDetails: 'IBAN: FR1234567890123456789012345',
                 isActive: true,
                 companyId: company.id
             }
@@ -77,7 +77,6 @@ async function main() {
                 position: 'Designer',
                 contractType: 'FIXE',
                 rate: 400000,
-                bankDetails: 'IBAN: FR1234567890123456789012346',
                 isActive: true,
                 companyId: company.id
             }
@@ -89,7 +88,6 @@ async function main() {
                 position: 'Manager',
                 contractType: 'FIXE',
                 rate: 600000,
-                bankDetails: 'IBAN: FR1234567890123456789012347',
                 isActive: true,
                 companyId: company.id
             }

@@ -4,8 +4,48 @@ import axios from 'axios';
 import { Calendar, Clock, Users, CheckCircle, XCircle, Coffee, AlertCircle, Plus, Filter, Calculator } from 'lucide-react';
 
 const Attendances = () => {
-  const { user } = useAuth();
+  const { user, companyColor } = useAuth();
   const [attendances, setAttendances] = useState([]);
+
+  const getTailwindColorClass = (hexColor, type = 'bg') => {
+    const colorMap = {
+      '#3B82F6': 'blue',
+      '#10B981': 'green',
+      '#8B5CF6': 'purple',
+      '#EF4444': 'red',
+      '#F97316': 'orange',
+      '#EC4899': 'pink',
+      '#6366F1': 'indigo',
+      '#14B8A6': 'teal',
+      '#06B6D4': 'cyan',
+      '#059669': 'emerald',
+      '#F59E0B': 'amber',
+      '#6B7280': 'gray',
+      '#6FA4AF': 'teal'
+    };
+
+    const baseColor = colorMap[hexColor] || 'blue';
+
+    if (type === 'bg') return `bg-${baseColor}-600`;
+    if (type === 'hoverBg') return `hover:bg-${baseColor}-700`;
+    if (type === 'text') return `text-${baseColor}-600`;
+    if (type === 'border') return `border-${baseColor}-500`;
+    if (type === 'bg-light') return `bg-${baseColor}-50`;
+    if (type === 'border-light') return `border-${baseColor}-200`;
+    if (type === 'focus-border') return `focus:border-${baseColor}-500`;
+    if (type === 'focus-ring') return `focus:ring-${baseColor}-100`;
+    return '';
+  };
+
+  const primaryColor = companyColor || '#6FA4AF';
+  const primaryBgClass = getTailwindColorClass(primaryColor, 'bg');
+  const primaryHoverBgClass = getTailwindColorClass(primaryColor, 'hoverBg');
+  const primaryTextColorClass = getTailwindColorClass(primaryColor, 'text');
+  const primaryBorderColorClass = getTailwindColorClass(primaryColor, 'border');
+  const primaryBgLightClass = getTailwindColorClass(primaryColor, 'bg-light');
+  const primaryBorderLightClass = getTailwindColorClass(primaryColor, 'border-light');
+  const primaryFocusBorderClass = getTailwindColorClass(primaryColor, 'focus-border');
+  const primaryFocusRingClass = getTailwindColorClass(primaryColor, 'focus-ring');
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -47,7 +87,7 @@ const Attendances = () => {
       const response = await axios.get(`http://localhost:3000/api/employees${companyId ? `?companyId=${companyId}` : ''}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
-      setEmployees(response.data.employees.filter(e => e.isActive && (e.contractType === 'JOURNALIER' || e.contractType === 'HONORAIRE')));
+      setEmployees(response.data.employees.filter(e => e.isActive)); // Inclure tous les employés actifs
     } catch (error) {
       console.error('Erreur lors du chargement des employés:', error);
     }
@@ -267,31 +307,33 @@ const Attendances = () => {
                 Gestion des Pointages
               </h1>
             </div>
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => setShowCheckInModal(true)}
-                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center"
-              >
-                <Clock className="h-4 w-4 mr-2" />
-                Pointage Rapide
-              </button>
-              {canAccessManualEntry && honoraireEmployees.length > 0 && (
+            {(user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') && (
+              <div className="flex items-center space-x-3">
                 <button
-                  onClick={() => setShowManualEntryModal(true)}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center"
+                  onClick={() => setShowCheckInModal(true)}
+                  className={`${primaryBgClass} ${primaryHoverBgClass} text-white px-4 py-2 rounded-md text-sm font-medium flex items-center`}
                 >
-                  <Calculator className="h-4 w-4 mr-2" />
-                  Saisie Manuelle
+                  <Clock className="h-4 w-4 mr-2" />
+                  Pointage Rapide
                 </button>
-              )}
-              <button
-                onClick={() => setShowModal(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Nouveau Pointage
-              </button>
-            </div>
+                {honoraireEmployees.length > 0 && (
+                  <button
+                    onClick={() => setShowManualEntryModal(true)}
+                    className={`${primaryBgClass} ${primaryHoverBgClass} text-white px-4 py-2 rounded-md text-sm font-medium flex items-center`}
+                  >
+                    <Calculator className="h-4 w-4 mr-2" />
+                    Saisie Manuelle
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowModal(true)}
+                  className={`${primaryBgClass} ${primaryHoverBgClass} text-white px-4 py-2 rounded-md text-sm font-medium flex items-center`}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nouveau Pointage
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -406,7 +448,7 @@ const Attendances = () => {
 
       {/* Modal Pointage Rapide */}
       {showCheckInModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="fixed inset-0 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
@@ -431,8 +473,8 @@ const Attendances = () => {
                     ))}
                   </select>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-md text-center">
-                  <Clock className="h-12 w-12 mx-auto text-indigo-600 mb-2" />
+                <div className={`${primaryBgLightClass} p-4 rounded-md text-center`}>
+                  <Clock className={`h-12 w-12 mx-auto ${primaryTextColorClass} mb-2`} />
                   <p className="text-2xl font-bold text-gray-900">
                     {new Date().toLocaleTimeString('fr-FR')}
                   </p>
@@ -444,7 +486,7 @@ const Attendances = () => {
                   <button
                     onClick={() => selectedEmployee && handleCheckIn(selectedEmployee)}
                     disabled={!selectedEmployee}
-                    className="bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white px-4 py-3 rounded-md text-sm font-medium flex items-center justify-center"
+                    className={`${primaryBgClass} ${primaryHoverBgClass} disabled:bg-gray-300 text-white px-4 py-3 rounded-md text-sm font-medium flex items-center justify-center`}
                   >
                     <CheckCircle className="h-5 w-5 mr-2" />
                     Arrivée
@@ -477,7 +519,7 @@ const Attendances = () => {
 
       {/* Modal Nouveau Pointage */}
       {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="fixed inset-0 bg-opacity-50 overflow-y-auto h-full w-full z-50 backdrop-blur-md bg-white/30 p-6 rounded-lg">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <h3 className="text-lg font-medium text-gray-900 mb-4">
@@ -490,7 +532,6 @@ const Attendances = () => {
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                     value={formData.employeeId}
                     onChange={(e) => setFormData({...formData, employeeId: e.target.value})}
-                    required
                   >
                     <option value="">-- Sélectionner --</option>
                     {employees.map(emp => (
@@ -507,7 +548,6 @@ const Attendances = () => {
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                     value={formData.date}
                     onChange={(e) => setFormData({...formData, date: e.target.value})}
-                    required
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
@@ -536,7 +576,6 @@ const Attendances = () => {
                     className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
                     value={formData.status}
                     onChange={(e) => setFormData({...formData, status: e.target.value})}
-                    required
                   >
                     <option value="PRESENT">Présent</option>
                     <option value="ABSENT">Absent</option>
@@ -567,7 +606,7 @@ const Attendances = () => {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700"
+                    className={`px-4 py-2 text-sm font-medium text-white ${primaryBgClass} ${primaryHoverBgClass} border border-transparent rounded-md`}
                   >
                     Créer
                   </button>
