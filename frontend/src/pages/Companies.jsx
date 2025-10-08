@@ -474,7 +474,7 @@ const Companies = () => {
               <div className="flex items-center">
                     <button
                       onClick={() => setShowModal(true)}
-                      className={`${primaryBgClass} ${primaryHoverBgClass} text-white px-4 py-2 rounded-md text-sm font-medium`}
+                      className={`${primaryBgClass} ${primaryHoverBgClass} bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium`}
                     >
                       Nouvelle entreprise
                     </button>
