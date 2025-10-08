@@ -179,6 +179,8 @@ export class PDFService {
               <div class="info-row"><span class="info-label">Nom:</span><span class="info-value">${employee.firstName} ${employee.lastName}</span></div>
               <div class="info-row"><span class="info-label">Poste:</span><span class="info-value">${employee.position}</span></div>
               <div class="info-row"><span class="info-label">Contrat:</span><span class="info-value">${employee.contractType}</span></div>
+              ${employee.contractType === 'JOURNALIER' && payslip.daysWorked ? `<div class="info-row"><span class="info-label">Jours travaillés:</span><span class="info-value">${payslip.daysWorked}</span></div>` : ''}
+              ${employee.contractType === 'HONORAIRE' && payslip.hoursWorked ? `<div class="info-row"><span class="info-label">Heures travaillées:</span><span class="info-value">${payslip.hoursWorked}</span></div>` : ''}
             </div>
 
             <!-- Right Section -->

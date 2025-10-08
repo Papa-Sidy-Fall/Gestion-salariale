@@ -258,6 +258,8 @@ export class PayRunService {
           gross: grossSalary,
           deductions: deductions,
           net: netSalary,
+          daysWorked: employee.contractType === 'JOURNALIER' ? daysWorked : undefined,
+          hoursWorked: employee.contractType === 'HONORAIRE' ? totalHours : undefined,
           status: 'EN_ATTENTE'
         },
         include: {
